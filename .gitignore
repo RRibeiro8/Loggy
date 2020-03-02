@@ -1,0 +1,7 @@
+# ignored files
+Dataset/*
+Dataset_organizer/*
+
+# Not ignored files
+!Dataset/.keep
+!Dataset_organizer/src/main.py
