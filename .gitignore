@@ -1,11 +1,57 @@
-# ignored files
-Dataset/*
-Dataset_organizer/*
-Image_Selector/src/dataset/*
-WebApp/*
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Not ignored files
+# C extensions
+*.so
+
+# Virtualenv
+
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+.venv
+pip-selfcheck.json
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django stuff:
+*.log
+local_settings.py
+
+# pyenv
+.python-version
+
+# Dataset ignore
+
+Dataset/*
 !Dataset/.keep
-!Dataset_organizer/src/main.py
+Image_Selector/src/dataset/*
 !Image_Selector/src/dataset/.keep
-!WebApp/Loggy/*
+
+*.json
+
+
+
