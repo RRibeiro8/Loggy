@@ -3,7 +3,7 @@ from django.views import View
 
 class HomeView(View):
 
-	template_name = 'base.html'
+	template_name = 'home.html'
 
 	def get(self, request):
 	
