@@ -56,3 +56,4 @@ Image_Selector/src/dataset/*
 WebApp/Loggy.sublime-project
 WebApp/Loggy.sublime-workspace
 
+!WebApp/Loggy/static/dist
