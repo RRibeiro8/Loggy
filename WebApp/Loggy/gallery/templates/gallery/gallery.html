@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block styles %}
+
+<link rel="stylesheet" href="{% static 'gallery/css/blueimp-gallery.min.css' %}" />
+
+<link rel="stylesheet" href="{% static 'gallery/css/gallery.css' %}" />
+
+{% endblock %}
+
+{% block content %}
+
+
+<!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">Gallery</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Loggy</a></li>
+              <li class="breadcrumb-item active">Gallery</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Main row -->
+        <div class="row">
+
+        	<div id="links" class="links">
+				{% for img in queryset %}
+
+				<a href="{{ img.file.url }}" title="{{ img.file.name }}">
+		    		<img src="{{ img.file.url }}" id="imgGallery" alt="{{ img.file.name }}" />
+		  		</a>
+
+				{% endfor %}
+
+			</div>
+        </div>
+        <!-- /.row -->
+      </div><!--/. container-fluid -->
+    </section>
+    <!-- /.content -->
+
+	
+	
+	<!-- The Gallery as lightbox dialog, should be a document body child element -->
+	<div id="blueimp-gallery" class="blueimp-gallery">
+		<div class="slides"></div>
+		<h3 class="title"></h3>
+		<a class="prev">‹</a>
+		<a class="next">›</a>
+		<a class="close">×</a>
+		<ol class="indicator"></ol>
+	</div>
+
+{% endblock %}
+
+{% block javascripts %}
+	<script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
+
+	<script>
+  		document.getElementById('links').onclick = function(event) {
+    		event = event || window.event
+    		var target = event.target || event.srcElement,
+      		link = target.src ? target.parentNode : target,
+      		options = { index: link, event: event },
+      		links = this.getElementsByTagName('a')
+    		blueimp.Gallery(links, options)
+  		}
+	</script>
+{% endblock %}

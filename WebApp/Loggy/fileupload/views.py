@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.views.generic import CreateView, DeleteView, ListView
-from .models import (ImageModel, LocationModel, ActivityModel,
-                    AttributesModel, CategoryModel, ConceptModel)
+from .models import (ImageModel, LocationModel) 
+from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel, ConceptModel)
 from .response import JSONResponse, response_mimetype
 from .serialize import serialize
 

@@ -22,6 +22,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', HomeView.as_view(), name='home'),
     path('upload/', include('fileupload.urls')),
+    path('visual/', include('visualrecognition.urls')),
+    path('gallery/', include('gallery.urls')),
 ]
 
 if settings.DEBUG:
