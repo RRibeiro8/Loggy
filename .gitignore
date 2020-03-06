@@ -55,5 +55,7 @@ Image_Selector/src/dataset/*
 
 WebApp/Loggy.sublime-project
 WebApp/Loggy.sublime-workspace
+WebApp/Loggy/media/database/*
+!WebApp/Loggy/media/database/.keep
 
 !WebApp/Loggy/static/dist
