@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block styles %}
+
+<link rel="stylesheet" href="{% static 'gallery/css/blueimp-gallery.min.css' %}" />
+
+<link rel="stylesheet" href="{% static 'gallery/css/gallery.css' %}" />
+
+{% endblock %}
+
+{% block content %}
+
+
+<!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">Date & Time</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Loggy</a></li>
+              <li class="breadcrumb-item active">Date & Time</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Main row -->
+        <div class="row">
+                    <div class="col-md-12">
+            <!-- The time line -->
+            <div class="timeline">
+              <!-- timeline time label -->
+              <div class="time-label">
+                <span class="bg-yellow">10 Feb. 2014</span>
+              </div>
+              <!-- /.timeline-label -->
+              <!-- timeline item -->
+              <div>
+                <i class="fa fa-camera bg-blue"></i>
+                <div class="timeline-item">
+                  <!-- <span class="time"><i class="fas fa-clock"></i> 12:05</span>
+                  <h3 class="timeline-header"><a href="#">Support Team</a> sent you an email</h3> -->
+
+                  <div class="timeline-body">
+
+                    <div id="links" class="links">
+                      {% for img in queryset %}
+
+                        <a href="{{ img.file.url }}" title="{{ img.file.name }}">
+                          <img src="{{ img.file.url }}" id="imgGallery" alt="{{ img.file.name }}" />
+                        </a>
+
+                      {% endfor %}
+
+                    </div>
+                    
+                  </div>
+                  <!-- <div class="timeline-footer">
+                    <a class="btn btn-primary btn-sm">Read more</a>
+                    <a class="btn btn-danger btn-sm">Delete</a>
+                  </div> -->
+                </div>
+              </div>
+              <!-- END timeline item -->
+              
+              <div>
+                <i class="fas fa-clock bg-gray"></i>
+              </div>
+            </div>
+          </div>
+          <!-- /.col -->
+
+        </div>
+        <!-- /.row -->
+      </div><!--/. container-fluid -->
+    </section>
+    <!-- /.content -->
+
+	
+	
+	<!-- The Gallery as lightbox dialog, should be a document body child element -->
+	<div id="blueimp-gallery" class="blueimp-gallery">
+		<div class="slides"></div>
+		<h3 class="title"></h3>
+		<a class="prev">‹</a>
+		<a class="next">›</a>
+		<a class="close">×</a>
+		<ol class="indicator"></ol>
+	</div>
+
+{% endblock %}
+
+{% block javascripts %}
+	<script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
+
+	<script>
+  		document.getElementById('links').onclick = function(event) {
+    		event = event || window.event
+    		var target = event.target || event.srcElement,
+      		link = target.src ? target.parentNode : target,
+      		options = { index: link, event: event },
+      		links = this.getElementsByTagName('a')
+    		blueimp.Gallery(links, options)
+  		}
+	</script>
+{% endblock %}
