@@ -24,6 +24,7 @@ urlpatterns = [
     path('upload/', include('fileupload.urls')),
     path('visual/', include('visualrecognition.urls')),
     path('gallery/', include('gallery.urls')),
+    path('retrieval/', include('retrieval.urls')),
 ]
 
 if settings.DEBUG:

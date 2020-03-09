@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block styles %}
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">Lifelog Moment Retrieval Task</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Loggy</a></li>
+              <li class="breadcrumb-item active">LMRT</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Main row -->
+        <div class="row">
+          
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Objects</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="row">
+                  <form mehtod="POST"> 
+                    {% csrf_token %}
+                    <div class="input-group input-group-md">
+                      <input type="text" class="form-control" id="post-tag">
+                      <span class="input-group-append">
+                        <button type="submit" class="btn btn-info btn-flat">ADD</button>
+                      </span>
+                    </div>
+                  </form>              
+                </div>
+
+                <hr>
+                <!-- /input-group -->
+                <div class="row">
+                  <table class="table" id="object-table">
+                    <tbody>
+                      {% for obj in queryset %}
+                        <td>{{ obj.tag }}</td>
+                      {% endfor %}
+                    </tbody>                    
+                  </table>
+
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Locations</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="input-group input-group-md">
+                  <input type="text" class="form-control">
+                  <span class="input-group-append">
+                    <button type="button" class="btn btn-info btn-flat">ADD</button>
+                  </span>
+                </div>
+                <!-- /input-group -->
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Activities</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="input-group input-group-md">
+                  <input type="text" class="form-control">
+                  <span class="input-group-append">
+                    <button type="button" class="btn btn-info btn-flat">ADD</button>
+                  </span>
+                </div>
+                <!-- /input-group -->
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Others</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="input-group input-group-md">
+                  <input type="text" class="form-control">
+                  <span class="input-group-append">
+                    <button type="button" class="btn btn-info btn-flat">ADD</button>
+                  </span>
+                </div>
+                <!-- /input-group -->
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+        </div>
+        <!-- /.row -->
+      </div><!--/. container-fluid -->
+    </section>
+    <!-- /.content -->
+
+	
+
+{% endblock %}
+
+{% block javascripts %}
+
+
+{% endblock %}

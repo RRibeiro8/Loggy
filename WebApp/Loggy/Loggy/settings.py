@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'fileupload',
     'visualrecognition',
     'gallery',
+    'retrieval',
 ]
 
 MIDDLEWARE = [

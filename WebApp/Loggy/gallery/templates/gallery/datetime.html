@@ -36,12 +36,15 @@
       <div class="container-fluid">
         <!-- Main row -->
         <div class="row">
-                    <div class="col-md-12">
+            <div class="col-md-12">
             <!-- The time line -->
             <div class="timeline">
+
+              {% for date, imgs in queryset.items %}
+
               <!-- timeline time label -->
               <div class="time-label">
-                <span class="bg-yellow">10 Feb. 2014</span>
+                <span class="bg-yellow">{{ date }}</span>
               </div>
               <!-- /.timeline-label -->
               <!-- timeline item -->
@@ -54,7 +57,7 @@
                   <div class="timeline-body">
 
                     <div id="links" class="links">
-                      {% for img in queryset %}
+                      {% for img in imgs %}
 
                         <a href="{{ img.file.url }}" title="{{ img.file.name }}">
                           <img src="{{ img.file.url }}" id="imgGallery" alt="{{ img.file.name }}" />
@@ -72,10 +75,12 @@
                 </div>
               </div>
               <!-- END timeline item -->
-              
+              {% endfor %}
+
               <div>
                 <i class="fas fa-clock bg-gray"></i>
               </div>
+              
             </div>
           </div>
           <!-- /.col -->
