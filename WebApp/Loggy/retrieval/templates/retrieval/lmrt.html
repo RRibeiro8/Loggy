@@ -4,6 +4,10 @@
 
 {% block styles %}
 
+<link rel="stylesheet" href="{% static 'gallery/css/blueimp-gallery.min.css' %}" />
+
+<link rel="stylesheet" href="{% static 'gallery/css/gallery.css' %}" />
+
 {% endblock %}
 
 
@@ -53,8 +57,6 @@
                       </span>
                     </div>             
                 </div>
-
-                <hr>
                 <!-- /input-group -->
                 <div class="row">
                   <table class="table" id="object-table">
@@ -85,8 +87,6 @@
                   </span>
                 </div>
                 <!-- /input-group -->
-                  <hr>
-                <!-- /input-group -->
                 <div class="row">
                   <table class="table" id="location-table">
                     <tbody>
@@ -116,7 +116,6 @@
                   </span>
                 </div>
                 <!-- /input-group -->
-                <hr>
                 <div class="row">
                   <table class="table" id="activity-table">
                     <tbody>
@@ -145,7 +144,6 @@
                   </span>
                 </div>
                 <!-- /input-group -->
-                <hr>
                 <div class="row">
                   <table class="table" id="other-table">
                     <tbody>
@@ -189,7 +187,12 @@
                   </ul>
                 </div>
               </div><!-- /.card-header -->
-              <div class="card-body">
+              <div class="card-body row">
+            
+                  <div id='links' class='links'>
+
+                  </div>
+               
                 <!-- <div class="tab-content p-0">
                   <div class="chart tab-pane active" id="revenue-chart"
                        style="position: relative; height: 300px;">
@@ -208,6 +211,15 @@
     </section>
     <!-- /.content -->
 
+    <!-- The Gallery as lightbox dialog, should be a document body child element -->
+  <div id="blueimp-gallery" class="blueimp-gallery">
+    <div class="slides"></div>
+    <h3 class="title"></h3>
+    <a class="prev">‹</a>
+    <a class="next">›</a>
+    <a class="close">×</a>
+    <ol class="indicator"></ol>
+  </div>
 	
 
 {% endblock %}
@@ -297,6 +309,7 @@
      loc_tags = [];
      act_tags = [];
      other_tags = [];
+     $('#links').html("");
       });
 
   $("#submit-tags").submit(function(e){
@@ -306,12 +319,39 @@
                 url: ".",
                 data: {obj_tags, loc_tags, act_tags, other_tags, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
                 success: function (data) {
-                  alert("Success");
+                  //alert("Success");
+                  images = data['queryset']
+
+                  //console.log(images)
+                  var gallery_html = ""
+
+                  for(var key in images)
+                  {
+                    gallery_html += "<a href='" + images[key] + "' title='" + key + "'>"
+                    gallery_html += "<img src='" + images[key] + "' alt='" + key + "' id='imgGallery'/> </a>"
+                    //console.log(images[key])
+                  }
+
+                  $('#links').html(gallery_html);
+
                 },
               });
    });
 
 </script>
+
+<script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
+
+  <script>
+      document.getElementById('links').onclick = function(event) {
+        event = event || window.event
+        var target = event.target || event.srcElement,
+          link = target.src ? target.parentNode : target,
+          options = { index: link, event: event },
+          links = this.getElementsByTagName('a')
+        blueimp.Gallery(links, options)
+      }
+  </script>
 
 
 {% endblock %}
