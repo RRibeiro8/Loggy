@@ -33,6 +33,7 @@
     <section class="content">
       <div class="container-fluid">
         <!-- Main row -->
+        <form method="POST" id="submit-tags"> {% csrf_token %}
         <div class="row">
           
           <div class="col-md-3">
@@ -44,15 +45,13 @@
               <div class="card-body">
 
                 <div class="row">
-                  <form mehtod="POST"> 
-                    {% csrf_token %}
+                  
                     <div class="input-group input-group-md">
-                      <input type="text" class="form-control" id="post-tag">
+                      <input type="text" class="form-control" id="object-tag">
                       <span class="input-group-append">
-                        <button type="submit" class="btn btn-info btn-flat">ADD</button>
+                        <button type="button" class="btn btn-info btn-flat" id="add_object">ADD</button>
                       </span>
-                    </div>
-                  </form>              
+                    </div>             
                 </div>
 
                 <hr>
@@ -60,9 +59,7 @@
                 <div class="row">
                   <table class="table" id="object-table">
                     <tbody>
-                      {% for obj in queryset %}
-                        <td>{{ obj.tag }}</td>
-                      {% endfor %}
+                      
                     </tbody>                    
                   </table>
 
@@ -82,12 +79,22 @@
               <div class="card-body">
 
                 <div class="input-group input-group-md">
-                  <input type="text" class="form-control">
+                  <input type="text" class="form-control" id="location-tag">
                   <span class="input-group-append">
-                    <button type="button" class="btn btn-info btn-flat">ADD</button>
+                    <button type="button" class="btn btn-info btn-flat" id="add_location">ADD</button>
                   </span>
                 </div>
                 <!-- /input-group -->
+                  <hr>
+                <!-- /input-group -->
+                <div class="row">
+                  <table class="table" id="location-table">
+                    <tbody>
+                      
+                    </tbody>                    
+                  </table>
+
+                </div>
               </div>
               <!-- /.card-body -->
             </div>
@@ -103,12 +110,20 @@
               <div class="card-body">
 
                 <div class="input-group input-group-md">
-                  <input type="text" class="form-control">
+                  <input type="text" class="form-control" id="activity-tag">
                   <span class="input-group-append">
-                    <button type="button" class="btn btn-info btn-flat">ADD</button>
+                    <button type="button" class="btn btn-info btn-flat" id="add_activity">ADD</button>
                   </span>
                 </div>
                 <!-- /input-group -->
+                <hr>
+                <div class="row">
+                  <table class="table" id="activity-table">
+                    <tbody>
+                      
+                    </tbody>                    
+                  </table>
+                </div>
               </div>
               <!-- /.card-body -->
             </div>
@@ -124,20 +139,71 @@
               <div class="card-body">
 
                 <div class="input-group input-group-md">
-                  <input type="text" class="form-control">
+                  <input type="text" class="form-control" id="other-tag">
                   <span class="input-group-append">
-                    <button type="button" class="btn btn-info btn-flat">ADD</button>
+                    <button type="button" class="btn btn-info btn-flat" id="add_other">ADD</button>
                   </span>
                 </div>
                 <!-- /input-group -->
+                <hr>
+                <div class="row">
+                  <table class="table" id="other-table">
+                    <tbody>
+                      
+                    </tbody>                    
+                  </table>
+                </div>
               </div>
               <!-- /.card-body -->
             </div>
             <!-- /.card -->
           </div>
-
+        
         </div>
         <!-- /.row -->
+        <div class="row">
+          <div class="card-body">
+            
+              <button type="reset" class="btn btn-block bg-gradient-primary btn-lg" id="reset-button">Refresh</button>
+              <button type="submit" class="btn btn-block bg-gradient-success btn-lg">Submit</button>
+           
+          </div>
+        </div>
+         </form>
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-th mr-1"></i>
+                  Results
+                </h3>
+                <div class="card-tools">
+                  <ul class="nav nav-pills ml-auto">
+                    <li class="nav-item">
+                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Images</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#sales-chart" data-toggle="tab">List</a>
+                    </li>
+                  </ul>
+                </div>
+              </div><!-- /.card-header -->
+              <div class="card-body">
+                <!-- <div class="tab-content p-0">
+                  <div class="chart tab-pane active" id="revenue-chart"
+                       style="position: relative; height: 300px;">
+                      <canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>                         
+                   </div>
+                  <div class="chart tab-pane" id="sales-chart" style="position: relative; height: 300px;">
+                    <canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>                         
+                  </div>  
+                </div> -->
+              </div><!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+            </div>
+        </div>
       </div><!--/. container-fluid -->
     </section>
     <!-- /.content -->
@@ -147,6 +213,105 @@
 {% endblock %}
 
 {% block javascripts %}
+
+<script type="text/javascript">
+
+  var obj_tags = [];
+
+  $('#add_object').click(function(){
+
+    obj = $('#object-tag').val();
+    obj_tags.push(obj);
+
+    var t = "<tbody>";
+    for (var i=0; i<obj_tags.length; i++)
+    {
+      t += "<tr><td>" + obj_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#object-table').html(t);
+
+  });
+
+  var loc_tags = [];
+
+  $('#add_location').click(function(){
+
+    loc = $('#location-tag').val();
+    loc_tags.push(loc);
+
+    var t = "<tbody>";
+    for (var i=0; i<loc_tags.length; i++)
+    {
+      t += "<tr><td>" + loc_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#location-table').html(t);
+
+  });
+
+  var act_tags = [];
+
+  $('#add_activity').click(function(){
+
+    act = $('#activity-tag').val();
+    act_tags.push(act);
+
+    var t = "<tbody>";
+    for (var i=0; i<act_tags.length; i++)
+    {
+      t += "<tr><td>" + act_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#activity-table').html(t);
+
+  });
+
+  var other_tags = [];
+
+  $('#add_other').click(function(){
+
+    other = $('#other-tag').val();
+    other_tags.push(other);
+
+    var t = "<tbody>";
+    for (var i=0; i<other_tags.length; i++)
+    {
+      t += "<tr><td>" + other_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#other-table').html(t);
+
+  });
+
+  $("#reset-button").click(function(){
+     $('#object-table').html("");
+     $('#location-table').html("");
+     $('#activity-table').html("");
+     $('#other-table').html("");
+     obj_tags = [];
+     loc_tags = [];
+     act_tags = [];
+     other_tags = [];
+      });
+
+  $("#submit-tags").submit(function(e){
+     e.preventDefault();
+        $.ajax({
+                type: 'POST',
+                url: ".",
+                data: {obj_tags, loc_tags, act_tags, other_tags, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+                success: function (data) {
+                  alert("Success");
+                },
+              });
+   });
+
+</script>
 
 
 {% endblock %}

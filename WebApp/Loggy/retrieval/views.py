@@ -9,26 +9,17 @@ class LMRTView(View):
 
 	template_name = "retrieval/lmrt.html"
 
-	def post(self, *args, **kwargs):
+	def post(self, request, *args, **kwargs):
 
-		form = ObjectsForm(self.request.POST)
-		print(form)
+		if request.is_ajax():
 
-		if form.is_valid():
-			
-			form = form.save()
+			print(request.POST.getlist('obj_tags[]'))
 
-			return JsonResponse({"success": True,
-			"form": form }, status=200)
+			return JsonResponse({"success": True}, status=200)
 		else:
 			return JsonResponse({"success": False}, status=400)
 
-	def get(self, *args, **kwargs):
+	def get(self, request, *args, **kwargs):
 
-		queryset = TopicObject.objects.all()
-
-		form = ObjectsForm()
-
-		context = { 'queryset': queryset,
-					'form': form }
+		context = {}
 		return render(self.request, self.template_name, context)
