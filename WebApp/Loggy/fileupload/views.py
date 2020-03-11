@@ -39,7 +39,7 @@ class ImageCreateView(CreateView):
         lt = datetime.strptime(img_data['local_time'], '%Y-%m-%d_%H:%M')
         local_time = lt.replace(tzinfo=pytz.timezone(img_data['timezone']))
         LocationModel.objects.create(image=image, latitude=img_data['latitude'], longitude=img_data['longitude'], 
-                                    name=img_data['location'], timezone=img_data['timezone'], local_time=local_time)
+                                    tag=img_data['location'], timezone=img_data['timezone'], local_time=local_time)
 
         ActivityModel.objects.create(image=image, tag=img_data['activity'])
 
@@ -47,7 +47,9 @@ class ImageCreateView(CreateView):
             AttributesModel.objects.create(image=image, tag=attr)
 
         for cat in img_data['categories']:
-            CategoryModel.objects.create(image=image, tag=cat, score=img_data['categories'][cat])
+            tmp = cat.split('/')
+            cat_filtered = tmp[0].replace('_', ' ')
+            CategoryModel.objects.create(image=image, tag=cat_filtered, score=img_data['categories'][cat])
 
         for con in img_data['concepts']:
             p_string = ""

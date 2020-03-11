@@ -10,6 +10,8 @@ from django.core import serializers
 from collections import Counter
 from .sentence_analyzer.nlp_analyzer import similarity
 
+from tqdm import tqdm
+
 
 class LMRTView(View):
 
@@ -28,11 +30,14 @@ class LMRTView(View):
 			image_list = {}
 			queryset = {}
 		
-			for img in images_set:
-
-				img_concepts = img.conceptmodel_set.all()
+			for img in tqdm(images_set):
 				
-				img_sim_score = self.compute_score(img_concepts, objects)
+				concepts_sim_score = self.compute_score(img.conceptmodel_set.all(), objects)
+				location_sim_score = self.compute_score(img.locationmodel_set.all(), locations)
+				activities_sim_score = self.compute_score(img.activitymodel_set.all(), activities)
+
+				img_sim_score = (concepts_sim_score + activities_sim_score + location_sim_score) / 3
+				#print(concepts_sim_score, activities_sim_score, location_sim_score, img_sim_score)
 				
 				if img_sim_score > 0.6:
 
@@ -72,7 +77,8 @@ class LMRTView(View):
 
 			sim_score += obj_sim_score
 
-		sim_score = sim_score / len(words)
+		if len(words) > 0:
+			sim_score = sim_score / len(words)
 
 		return sim_score
 

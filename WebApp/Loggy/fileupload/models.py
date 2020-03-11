@@ -30,7 +30,7 @@ class LocationModel(models.Model):
     image = models.ForeignKey(ImageModel, on_delete=models.CASCADE)
     latitude = models.DecimalField(blank=True, null=True, max_digits=11, decimal_places=8)
     longitude = models.DecimalField(blank=True, null=True, max_digits=11, decimal_places=8)
-    name = models.CharField(max_length=255, blank=True)
+    tag = models.CharField(max_length=255, blank=True)
     timezone = models.CharField(max_length=255, blank=True)
     local_time = models.DateTimeField(blank=True, null=True)
 

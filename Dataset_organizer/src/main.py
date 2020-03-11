@@ -35,9 +35,10 @@ def main():
 				concepts = {}
 				for j in range(0, len(tmp), 3):
 					cont  = {}
-
-					if (tmp[j] != "NULL"):
+					#print(tmp[j])
+					if (tmp[j] != "NULL" and len(tmp[j]) > 0 ):
 						box = tmp[j+2].split(' ')
+						#print(tmp[j+1])
 						cont['score'] = float(tmp[j+1])
 						cont['box'] = [float(box[0]), float(box[1]), float(box[2]), float(box[3])]
 
@@ -82,7 +83,7 @@ def main():
 			
 			i += 1
 
-	with open('data.json', 'w') as jsonfile:
+	with open('updated_data.json', 'w') as jsonfile:
 		json.dump(all_data, jsonfile, indent=4)
 
 	return 0
