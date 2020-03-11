@@ -7,6 +7,7 @@ from fileupload.models import ImageModel, LocationModel
 from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel, ConceptModel)
 from django.core import serializers
 
+from collections import Counter
 
 
 class LMRTView(View):
@@ -22,13 +23,24 @@ class LMRTView(View):
 			activities = request.POST.getlist('act_tags[]')
 			others = request.POST.getlist('other_tags[]')
 
-			#images_set = ImageModel.objects.all()
-
+			images_set = ImageModel.objects.all()
 			image_list = {}
+		
+			for img in images_set:
+
+				img_concepts = img.conceptmodel_set.all()
+				count_concepts = Counter([c.tag for c in img_concepts])
+
+				for con in count_concepts:
+					print(con)
+
+
 
 			for obj in objects:
 				queryset = ConceptModel.objects.filter(tag=obj)
 				for q in queryset:
+
+
 					url = q.image.file.url
 					name = q.image.file.name
 
