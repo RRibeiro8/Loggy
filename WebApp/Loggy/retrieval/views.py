@@ -8,6 +8,7 @@ from visualrecognition.models import (ActivityModel, AttributesModel, CategoryMo
 from django.core import serializers
 
 from collections import Counter
+from .sentence_analyzer.nlp_analyzer import similarity
 
 
 class LMRTView(View):
@@ -25,24 +26,19 @@ class LMRTView(View):
 
 			images_set = ImageModel.objects.all()
 			image_list = {}
+			queryset = {}
 		
 			for img in images_set:
 
 				img_concepts = img.conceptmodel_set.all()
-				count_concepts = Counter([c.tag for c in img_concepts])
+				
+				img_sim_score = self.compute_score(img_concepts, objects)
+				
+				if img_sim_score > 0.6:
 
-				for con in count_concepts:
-					print(con)
-
-
-
-			for obj in objects:
-				queryset = ConceptModel.objects.filter(tag=obj)
-				for q in queryset:
-
-
-					url = q.image.file.url
-					name = q.image.file.name
+					#queryset[img.slug] = img_sim_score
+					url = img.file.url
+					name = img.file.name
 
 					image_list[name] = url
 
@@ -57,5 +53,28 @@ class LMRTView(View):
 
 		context = {}
 		return render(self.request, self.template_name, context)
+
+
+	def compute_score(self, imgs, words):
+
+		count_concepts = Counter([c.tag for c in imgs])
+
+		sim_score = 0
+		
+		for obj in words:
+			obj_sim_score = 0
+			for con in count_concepts:
+			
+				score = similarity(obj, con)
+
+				if score > obj_sim_score:
+					obj_sim_score = score
+
+			sim_score += obj_sim_score
+
+		sim_score = sim_score / len(words)
+
+		return sim_score
+
 
 
