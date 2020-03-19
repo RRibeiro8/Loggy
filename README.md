@@ -82,3 +82,16 @@ This folder contains a program, "main.py" that organize the metadata and visual 
 > pip install tqdm
 
 ## Image_selector
+
+```bibtex
+@inproceedings{ribeiro2020image,
+  title={Image selection based on low level properties for lifelog moment retrieval},
+  author={Ribeiro, Ricardo F and Neves, Ant{\'o}nio JR and Oliveira, Jos{\'e} Luis},
+  booktitle={Twelfth International Conference on Machine Vision (ICMV 2019)},
+  volume={11433},
+  pages={1143303},
+  year={2020},
+  organization={International Society for Optics and Photonics}
+}
+```
+
