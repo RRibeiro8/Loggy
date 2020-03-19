@@ -21,7 +21,7 @@ def main():
 				tmp = line[2].split('/')
 				image_id = tmp[3]
 
-				data['atributtes'] = line[3:13]
+				data['attributes'] = line[3:13]
 
 				tmp = line[13:23]
 
