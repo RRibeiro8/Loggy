@@ -77,4 +77,8 @@ This folder contains a program, "main.py" that organize the metadata and visual 
         },
 ```
 
+### optional requirements
+
+> pip install tqdm
+
 ## Image_selector
