@@ -28,6 +28,70 @@ The dataset is composed as follows:
 
 ## WebApp
 
+This folder contains a web application developed in Django for visualization, summarization and retrieval of moments in the presented dataset.
+In order to run the web server locally, a virtual environment is used as mentioned in section above.
+
+### Requeriments
+
+The requirements can be installed using the following command:
+
+> pip install -r requirements.txt
+
+After installing the requirements, it is necessary to download the next models:
+
+> python -m spacy download en_core_web_md
+
+### Database (MariaDB)
+
+In this application, the MariaDB is used. In order to create a new database for Loggy WebApp follow the next steps:
+
+```bash
+# Install and perform the necessary initial configuration in you system. Install the packages from the repositories by typing:
+
+sudo apt-get update
+sudo apt-get install mariadb-server libmariadbclient-dev libssl-dev
+
+sudo mysql_secure_installation
+
+
+# Create the database for Loggy WebApp:
+
+sudo mysql -u root -p
+
+CREATE DATABASE Loggy CHARACTER SET UTF8;
+CREATE USER admin@localhost IDENTIFIED BY 'admin';
+GRANT ALL PRIVILEGES ON Loggy.* TO admin@localhost;
+FLUSH PRIVILEGES;
+exit
+
+# if you want to delete the database and create another database use:
+DROP DATABASE Loggy; 
+
+# After deteting or "drop", create the database following the mentioned commands
+
+```
+
+### Running the Loggy WebApp
+
+Inside of the virtualenviroment the migration have to be done as follows:
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+After the migrations run the web application locally by:
+
+```bash
+python manage.py runserver
+```
+
+If you want to access to the admin view of Django (/admin/), it needed to create a superuser account as follows:
+
+```bash
+python manage.py createsuperuser
+```
+
 ## Dataset_organizer
 
 This folder contains a program, "main.py" that organize the metadata and visual concepts data from Dataset folder into a json file. The generated json file e organized as follows:

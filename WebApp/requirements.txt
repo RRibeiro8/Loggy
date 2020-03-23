@@ -1,0 +1,5 @@
+Django==3.0.4
+mysqlclient==1.4.6
+numpy==1.18.2
+spacy==2.2.4
+Pillow==7.0.0
