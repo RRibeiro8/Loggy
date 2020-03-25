@@ -7,6 +7,8 @@ from fileupload.models import ImageModel, LocationModel
 from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel, ConceptModel)
 from django.core import serializers
 
+from .models import TopicModel
+
 from collections import Counter
 from .sentence_analyzer.nlp_analyzer import similarity
 
@@ -81,6 +83,25 @@ class LMRTView(View):
 			sim_score = sim_score / len(words)
 
 		return sim_score
+
+class GTView(View):
+
+	template_name = "retrieval/gt.html"
+	model = TopicModel
+
+	def get(self, request, *args, **kwargs):
+
+		topicset = self.model.objects.all()
+		context = { 'topics': topicset }
+		return render(self.request, self.template_name, context)
+
+	def post(self, request, *args, **kwargs):
+
+		print(request.POST)
+
+		topicset = self.model.objects.all()
+		context = { 'topics': topicset }
+		return render(self.request, self.template_name, context)
 
 
 
