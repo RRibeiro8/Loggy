@@ -58,8 +58,7 @@
 
                     <div id="links" class="links">
                       {% for img in imgs %}
-
-                        <a href="{{ img.file.url }}" title="{{ img.file.name }}">
+                        <a href="{{ img.file.url }}" title="{{ img.file.name }}" data-gallery="{{ date }}">
                           <img src="{{ img.file.url }}" id="imgGallery" alt="{{ img.file.name }}" />
                         </a>
 
@@ -92,7 +91,6 @@
     <!-- /.content -->
 
 	
-	
 	<!-- The Gallery as lightbox dialog, should be a document body child element -->
 	<div id="blueimp-gallery" class="blueimp-gallery">
 		<div class="slides"></div>
@@ -106,16 +104,6 @@
 {% endblock %}
 
 {% block javascripts %}
-	<script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
+	<script src="{% static 'gallery/js/jquery.blueimp-gallery.min.js' %}"></script>
 
-	<script>
-  		document.getElementById('links').onclick = function(event) {
-    		event = event || window.event
-    		var target = event.target || event.srcElement,
-      		link = target.src ? target.parentNode : target,
-      		options = { index: link, event: event },
-      		links = this.getElementsByTagName('a')
-    		blueimp.Gallery(links, options)
-  		}
-	</script>
 {% endblock %}
