@@ -60,10 +60,10 @@
                 <div class="card-tools">
                   <ul class="nav nav-pills ml-auto">
                     <li class="nav-item">
-                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Images</a>
+                      <a class="nav-link active" href="#" data-toggle="tab" id="showimages">Images</a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link" href="#sales-chart" data-toggle="tab">List</a>
+                      <a class="nav-link" href="#" data-toggle="tab" id="showlist">List</a>
                     </li>
                   </ul>
                 </div>
@@ -71,14 +71,12 @@
               <div class="card-body row">
             
                   <div id="showtopics" >
-                    
-
                   </div>
 
-                  <hr>
+                  <div id="showimagelist">
+                  </div>
 
                   <div id='links' class='links'>
-
                   </div>
                
                 <!-- <div class="tab-content p-0">
@@ -141,6 +139,7 @@
         $.ajax({
                 type: 'POST',
                 url: ".",
+                cache: false,
                 data: {data, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
                 success: function (data) {
                   //alert("Success");
@@ -153,17 +152,41 @@
 
                   images = data['queryset']
 
-                  //console.log(images)
-                  var gallery_html = ""
-
-                  for(var key in images)
+                  if( $('#showimages').hasClass('active'))
                   {
-                    gallery_html += "<a href='" + images[key] + "' title='" + key + "'>"
-                    gallery_html += "<img src='" + images[key] + "' alt='" + key + "' id='imgGallery'/> </a>"
-                    //console.log(images[key])
+                    //console.log(images)
+                    var gallery_html = ""
+
+                    for(var key in images)
+                    {
+                      gallery_html += "<a href='" + images[key] + "' title='" + key + "'>"
+                      gallery_html += "<img src='" + images[key] + "' alt='" + key + "' id='imgGallery'/> </a>"
+                      //console.log(images[key])
+                    }
+                    $('#showimagelist').html("");
+                    $('#links').html(gallery_html);
+                  }
+                  if( $('#showlist').hasClass('active'))
+                  {
+                    $('#links').html("");
+
+                    var list_html = "<table class='table'><tbody>";
+
+                    for(var key in images)
+                    {
+                      list_html += "<tr><td><a href='" + images[key] + "' title='" + key + "'>"
+                                    + "<img style='max-width:80px; max-height:80px;' src='" + images[key] + "'></a></td>"
+                                    + "<td><a href='" + images[key] + "' title='" + key + "' >" + key + "</a></td>"
+                                    +  "<td><span class='size'>100%</span></td></tr>"            
+                    }
+
+                    list_html += "</tbody></table> "
+                      
+                    $('#showimagelist').html(list_html);
                   }
 
-                  $('#links').html(gallery_html);
+
+                  
                 },
               });
       });
