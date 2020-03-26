@@ -45,20 +45,17 @@
           <div class="col">
             <div class="card">
               <div class="card-header">
-                <div class="card-title">
+                <div class="card-title">  
                   <form method="POST"> {% csrf_token %}
-                    <select class="form-control select2">
+                    <select class="form-control select2" id="select2">
                       <option></option>
                       {% for top in topics %}
-
                         <option value={{ top.id }}>{{top.title}}</option>
-
                       {% endfor %}
-
                    </select>
 
-                   <input type="submit" value="View"/>
-                 </form>
+                  </form>
+                    
                 </div>
                 <div class="card-tools">
                   <ul class="nav nav-pills ml-auto">
@@ -73,6 +70,13 @@
               </div><!-- /.card-header -->
               <div class="card-body row">
             
+                  <div id="showtopics" >
+                    
+
+                  </div>
+
+                  <hr>
+
                   <div id='links' class='links'>
 
                   </div>
@@ -127,9 +131,42 @@
   <script>
 
     $(document).ready(function() {
-      $('.select2').select2({
-      placeholder: "Select Topic",
-    });
+      $('#select2').select2({
+        placeholder: "Select Topic",
+        theme: "classic",
+      });
+
+      $('#select2').on('select2:select', function (e) {
+        var data = e.params.data.text;
+        $.ajax({
+                type: 'POST',
+                url: ".",
+                data: {data, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+                success: function (data) {
+                  //alert("Success");
+                  
+                  var topics_html = "<p class='font-weight-bolder'>" + data['title'] + "</p>"
+                                  +  "<p class='font-weight-normal'>" + data['description'] + "</p>"
+                                  +  "<p class='font-weight-lighter'>" + data['narrative'] + "</p>";
+
+                  $('#showtopics').html(topics_html);
+
+                  images = data['queryset']
+
+                  //console.log(images)
+                  var gallery_html = ""
+
+                  for(var key in images)
+                  {
+                    gallery_html += "<a href='" + images[key] + "' title='" + key + "'>"
+                    gallery_html += "<img src='" + images[key] + "' alt='" + key + "' id='imgGallery'/> </a>"
+                    //console.log(images[key])
+                  }
+
+                  $('#links').html(gallery_html);
+                },
+              });
+      });
     });
   </script>
   

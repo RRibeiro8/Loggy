@@ -14,6 +14,9 @@ from .sentence_analyzer.nlp_analyzer import similarity
 
 from tqdm import tqdm
 
+import os
+from django.conf import settings
+
 
 class LMRTView(View):
 
@@ -97,11 +100,39 @@ class GTView(View):
 
 	def post(self, request, *args, **kwargs):
 
-		print(request.POST)
+		if request.is_ajax():
 
-		topicset = self.model.objects.all()
-		context = { 'topics': topicset }
-		return render(self.request, self.template_name, context)
+			topic_title = request.POST.getlist('data')[0]
+
+			obj = self.model.objects.filter(title=topic_title)[0]
+
+			image_list = {}
+
+			with open(os.path.join(settings.MEDIA_ROOT, 'ImageCLEF2020_dev_gt.txt'), 'r') as f:
+				lines = f.readlines()
+
+				for l in lines:
+					tmp = l.split(', ')
+
+					if tmp[0] == obj.topic_id:
+
+						img = ImageModel.objects.filter(slug=tmp[1])[0]
+						url = img.file.url
+						name = img.file.name
+
+						image_list[name] = url
+
+
+			context = { "success": True,
+						"title": obj.title,
+						"narrative": obj.narrative,
+						"description": obj.description,
+						"queryset": image_list
+						}
+
+			return JsonResponse(context, status=200)
+		else:
+			return JsonResponse({"success": False}, status=400)
 
 
 
