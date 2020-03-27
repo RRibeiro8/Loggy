@@ -10,9 +10,10 @@ from django.core import serializers
 from .models import TopicModel
 
 from collections import Counter
-from .sentence_analyzer.nlp_analyzer import similarity
+from .sentence_analyzer.nlp_analyzer import similarity, plural2singular
 
 from tqdm import tqdm
+import numpy as np
 
 import os
 from django.conf import settings
@@ -27,30 +28,37 @@ class LMRTView(View):
 		if request.is_ajax():
 
 			objects = request.POST.getlist('obj_tags[]')
-			locations = request.POST.getlist('loc_tags[]')
-			activities = request.POST.getlist('act_tags[]')
-			others = request.POST.getlist('other_tags[]')
+			#locations = request.POST.getlist('loc_tags[]')
+			#activities = request.POST.getlist('act_tags[]')
+			#others = request.POST.getlist('other_tags[]')
 
 			images_set = ImageModel.objects.all()
 			image_list = {}
 			queryset = {}
+
+			sing_objs = []
+			for ob in objects:
+				sing_objs.append(plural2singular(ob))
 		
 			for img in tqdm(images_set):
-				
-				concepts_sim_score = self.compute_score(img.conceptmodel_set.all(), objects)
-				location_sim_score = self.compute_score(img.locationmodel_set.all(), locations)
-				activities_sim_score = self.compute_score(img.activitymodel_set.all(), activities)
 
-				img_sim_score = (concepts_sim_score + activities_sim_score + location_sim_score) / 3
+				count_concepts = self.word_counter(img.conceptmodel_set.all())
+				
+				concepts_sim_score = self.compute_score(img, count_concepts, sing_objs)
+				#location_sim_score = self.compute_score(img.locationmodel_set.all(), locations)
+				#activities_sim_score = self.compute_score(img.activitymodel_set.all(), activities)
+
+				img_sim_score = concepts_sim_score#(concepts_sim_score + activities_sim_score + location_sim_score) / 3
 				#print(concepts_sim_score, activities_sim_score, location_sim_score, img_sim_score)
 				
-				if img_sim_score > 0.6:
+				if img_sim_score >= 0.65:
 
 					#queryset[img.slug] = img_sim_score
 					url = img.file.url
 					name = img.file.name
 
-					image_list[name] = url
+					score = img_sim_score*100
+					image_list[name] = [ {'url': url, 'conf': score} ]
 
 			#serializers.serialize('json', image_list)
 			#print(image_list)
@@ -64,21 +72,27 @@ class LMRTView(View):
 		context = {}
 		return render(self.request, self.template_name, context)
 
+	def word_counter(self, img_words):
+		return Counter([c.tag for c in img_words])
 
-	def compute_score(self, imgs, words):
-
-		count_concepts = Counter([c.tag for c in imgs])
+	def compute_score(self, img, count_concepts, words):
 
 		sim_score = 0
-		
+
 		for obj in words:
 			obj_sim_score = 0
 			for con in count_concepts:
-			
-				score = similarity(obj, con)
 
-				if score > obj_sim_score:
-					obj_sim_score = score
+				querytag = img.conceptmodel_set.filter(tag=con)
+
+				tag_score_mean = np.mean([c.score for c in querytag])
+			
+				score_sim = similarity(obj, con)
+
+				par_score = tag_score_mean*score_sim
+
+				if par_score > obj_sim_score:
+					obj_sim_score = par_score
 
 			sim_score += obj_sim_score
 
