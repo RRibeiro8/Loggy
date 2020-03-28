@@ -8,6 +8,10 @@
 
 <link rel="stylesheet" href="{% static 'gallery/css/gallery.css' %}" />
 
+<link rel="stylesheet" type="text/css" href="{% static 'retrieval/DataTables/datatables.min.css' %}"/>
+
+<link rel="stylesheet" href="{% static 'retrieval/css/table.css' %}" />
+
 {% endblock %}
 
 
@@ -187,7 +191,7 @@
                   </ul>
                 </div>
               </div><!-- /.card-header -->
-              <div class="card-body row">
+              <div class="card-body">
             
                   <div class="tab-content p-0">
                   <div class="tab-pane active" id="revenue-chart"
@@ -224,6 +228,8 @@
 {% endblock %}
 
 {% block javascripts %}
+
+<script type="text/javascript" src="{% static 'retrieval/DataTables/datatables.min.js' %}"></script>
 
 <script type="text/javascript">
 
@@ -333,7 +339,11 @@
 
                   $('#links').html(gallery_html);
 
-                  var list_html = "<table class='table' id='tablelist'><tbody>";
+                  var list_html = "<table id='dtBasicExample' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                  + "<th class='th-sm'>Images</th>" 
+                  + "<th class='th-sm'>URL</th>" 
+                  + "<th class='th-sm'>Confidence</th>" 
+                  + "</tr></thead><tbody>";
 
                   for(var key in images)
                   {
@@ -346,6 +356,9 @@
                   list_html += "</tbody></table> ";
                     
                   $('#showimagelist').html(list_html);
+
+                  $('#dtBasicExample').DataTable();
+                  //$('.dataTables_length').addClass('bs-select');
 
                 },
               });

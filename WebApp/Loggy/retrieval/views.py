@@ -43,15 +43,17 @@ class LMRTView(View):
 			for img in tqdm(images_set):
 
 				count_concepts = self.word_counter(img.conceptmodel_set.all())
+				count_location = self.word_counter(img.locationmodel_set.all())
 				
 				concepts_sim_score = self.compute_score(img, count_concepts, sing_objs)
+				location_sim_score = self.compute_score(img, count_location, sing_objs)
 				#location_sim_score = self.compute_score(img.locationmodel_set.all(), locations)
 				#activities_sim_score = self.compute_score(img.activitymodel_set.all(), activities)
 
-				img_sim_score = concepts_sim_score#(concepts_sim_score + activities_sim_score + location_sim_score) / 3
+				img_sim_score = (concepts_sim_score + location_sim_score) / 2 #(concepts_sim_score + activities_sim_score + location_sim_score) / 3
 				#print(concepts_sim_score, activities_sim_score, location_sim_score, img_sim_score)
 				
-				if img_sim_score >= 0.65:
+				if img_sim_score >= 0.2:
 
 					#queryset[img.slug] = img_sim_score
 					url = img.file.url
