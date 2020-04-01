@@ -55,7 +55,7 @@ class LMRTView(View):
 				count_attributes = self.word_counter(img.attributesmodel_set.all())
 				count_categories = self.word_counter(img.categorymodel_set.all())
 				###
-				print(img.file.name)
+				#print(img.file.name)
 
 				### processing time -- 0.01 s
 				concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
@@ -70,7 +70,10 @@ class LMRTView(View):
 				d = {**categories_score, **count_location}		
 				final_locations_score = self.compute_score(locations, d)
 
-				img_conf = (final_locations_score + final_objs_score) / 2 
+				d = {**count_activities, **count_attributes}
+				final_activities_score = self.compute_score(activities, d)
+
+				img_conf = (final_locations_score + final_objs_score + final_activities_score) / 3
 				#print("Final: ", final_objs_score, final_locations_score, img_conf)
 				if img_conf > 0:
 
@@ -145,7 +148,10 @@ class LMRTView(View):
 				if sim_score < 0.5:
 					sim_score = 0
 
-				con_score = d[con]*sim_score
+				if d[con] >= 1:
+					con_score = 1*sim_score
+				else:
+					con_score = d[con]*sim_score
 				#print(w_lemma[0], con, con_score)
 
 				if con_score >= 0.4:
