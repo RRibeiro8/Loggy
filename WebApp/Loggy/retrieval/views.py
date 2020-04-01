@@ -10,13 +10,15 @@ from django.core import serializers
 from .models import TopicModel
 
 from collections import Counter
-from .sentence_analyzer.nlp_analyzer import similarity, plural2singular
+from .sentence_analyzer.nlp_analyzer import similarity, word2lemma
 
 from tqdm import tqdm
 import numpy as np
 
 import os
 from django.conf import settings
+
+import time
 
 
 class LMRTView(View):
@@ -28,42 +30,59 @@ class LMRTView(View):
 		if request.is_ajax():
 
 			objects = request.POST.getlist('obj_tags[]')
-			#locations = request.POST.getlist('loc_tags[]')
-			#activities = request.POST.getlist('act_tags[]')
-			#others = request.POST.getlist('other_tags[]')
+			locations = request.POST.getlist('loc_tags[]')
+			activities = request.POST.getlist('act_tags[]')
+			timedates = request.POST.getlist('other_tags[]')
 
 			images_set = ImageModel.objects.all()
 			image_list = {}
 			queryset = {}
 
-			sing_objs = []
-			for ob in objects:
-				sing_objs.append(plural2singular(ob))
-		
-			for img in tqdm(images_set):
+			#print(new_objs)
+			#print(locations)
+			#print(new_act)
+			#print(timedates)
+			### 
+			
+			tic = time.clock()
 
+			for img in tqdm(images_set):
+				
+				### processing time -- 0.004 s
 				count_concepts = self.word_counter(img.conceptmodel_set.all())
 				count_location = self.word_counter(img.locationmodel_set.all())
-				
-				concepts_sim_score = self.compute_score(img, count_concepts, sing_objs)
-				location_sim_score = self.compute_score(img, count_location, sing_objs)
-				#location_sim_score = self.compute_score(img.locationmodel_set.all(), locations)
-				#activities_sim_score = self.compute_score(img.activitymodel_set.all(), activities)
+				count_activities = self.word_counter(img.activitymodel_set.all())
+				count_attributes = self.word_counter(img.attributesmodel_set.all())
+				count_categories = self.word_counter(img.categorymodel_set.all())
+				###
+				print(img.file.name)
 
-				img_sim_score = (concepts_sim_score + location_sim_score) / 2 #(concepts_sim_score + activities_sim_score + location_sim_score) / 3
-				#print(concepts_sim_score, activities_sim_score, location_sim_score, img_sim_score)
-				
-				if img_sim_score >= 0.2:
+				### processing time -- 0.01 s
+				concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
+				categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
+				#####
 
-					#queryset[img.slug] = img_sim_score
+				tic = time.clock()
+
+				d = {**concepts_score}
+				final_objs_score = self.compute_score(objects, d)
+
+				d = {**categories_score, **count_location}		
+				final_locations_score = self.compute_score(locations, d)
+
+				img_conf = (final_locations_score + final_objs_score) / 2 
+				#print("Final: ", final_objs_score, final_locations_score, img_conf)
+				if img_conf > 0:
+
 					url = img.file.url
 					name = img.file.name
 
-					score = img_sim_score*100
+					score = img_conf*100
 					image_list[name] = [ {'url': url, 'conf': score} ]
 
-			#serializers.serialize('json', image_list)
-			#print(image_list)
+				toc = time.clock()
+				#print("Processing time: ", (toc - tic))
+
 
 			return JsonResponse({"success": True, "queryset": image_list}, status=200)
 		else:
@@ -74,34 +93,76 @@ class LMRTView(View):
 		context = {}
 		return render(self.request, self.template_name, context)
 
+	def retrieve_scores(self, counts, img_at):
+		toreturn = {}
+		for con in counts:
+			#### If we want to take into account the number of objects 
+			#if counts[con] == 1 or > 1:
+			querytag = img_at.filter(tag=con)
+			for c in querytag:
+				lemma = word2lemma(c.tag)
+				if len(lemma) > 1:
+					n_gram = ""
+					for l in lemma:
+						if n_gram == "":
+							n_gram = l
+						else:
+							n_gram = n_gram + " " + l
+					
+					if n_gram not in toreturn:
+						toreturn[n_gram] = c.score
+					else:
+						if c.score > toreturn[n_gram]:
+							toreturn[n_gram] = c.score
+				else:
+
+					for l in lemma:
+						if l not in toreturn:
+							toreturn[l] = c.score
+						else:
+							if c.score > toreturn[l]:
+								toreturn[l] = c.score
+
+		return toreturn
+
 	def word_counter(self, img_words):
-		return Counter([c.tag for c in img_words])
 
-	def compute_score(self, img, count_concepts, words):
+		lista = []
+		for c in img_words:
+			if c.tag != "NULL":
+				lista.append(c.tag)
+		return Counter(lista)
 
-		sim_score = 0
+	def compute_score(self, objects, d):
+		final_objs_score = 0
+		for word in objects:
+			w_lemma = word2lemma(word)
+			w_score = 0
+			i = 0
+			for con in d:
+				##if we wanto to filter more, we can treshold the similarity
+				sim_score = similarity(w_lemma[0], con)
+				if sim_score < 0.5:
+					sim_score = 0
 
-		for obj in words:
-			obj_sim_score = 0
-			for con in count_concepts:
+				con_score = d[con]*sim_score
+				#print(w_lemma[0], con, con_score)
 
-				querytag = img.conceptmodel_set.filter(tag=con)
+				if con_score >= 0.4:
+					w_score = (w_score + con_score)
+					i += 1
 
-				tag_score_mean = np.mean([c.score for c in querytag])
-			
-				score_sim = similarity(obj, con)
+			if i > 0:
+				w_score = w_score / i
 
-				par_score = tag_score_mean*score_sim
+			#print(w_lemma[0], w_score)
 
-				if par_score > obj_sim_score:
-					obj_sim_score = par_score
-
-			sim_score += obj_sim_score
-
-		if len(words) > 0:
-			sim_score = sim_score / len(words)
-
-		return sim_score
+			final_objs_score = final_objs_score + w_score
+		
+		if len(objects) > 0:
+			final_objs_score = final_objs_score / len(objects)
+		
+		return final_objs_score
 
 class GTView(View):
 

@@ -5,20 +5,22 @@ import spacy
 
 nlp = spacy.load('en_core_web_md')
 
-def plural2singular(word):
+def word2lemma(word):
+
 	doc = nlp(word)
+	lista = []
 
-	singular = ""
 	for token in doc:
-		singular = token.lemma_
+		lista.append(token.lemma_)
 
-	return singular
+	return lista
 
 def similarity(a, b):
 
 	word_a = nlp(a)
 	word_b = nlp(b)
 	score = word_a.similarity(word_b)
+	#print(a, b, score)
 
 	return score
 
