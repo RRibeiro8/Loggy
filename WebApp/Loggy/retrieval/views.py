@@ -1,8 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-#from .models import TopicObject
-#from .forms import ObjectsForm
+
 from fileupload.models import ImageModel, LocationModel
 from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel, ConceptModel)
 from django.core import serializers
@@ -43,10 +42,10 @@ class LMRTView(View):
 			#print(new_act)
 			#print(timedates)
 			### 
-			
-			tic = time.clock()
 
 			for img in tqdm(images_set):
+
+				#print(img.date_time)
 				
 				### processing time -- 0.004 s
 				count_concepts = self.word_counter(img.conceptmodel_set.all())
