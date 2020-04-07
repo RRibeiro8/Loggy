@@ -18,6 +18,7 @@ import os
 from django.conf import settings
 
 import time
+import collections
 
 
 class LMRTView(View):
@@ -43,6 +44,8 @@ class LMRTView(View):
 			#print(timedates)
 			### 
 
+			evaluation_list = {}
+
 			for img in tqdm(images_set):
 
 				#print(img.date_time)
@@ -65,13 +68,13 @@ class LMRTView(View):
 
 				tic = time.clock()
 
-				d = {**concepts_score, **att_nouns}
+				d = {**concepts_score}
 				final_objs_score = self.compute_score(objects, d)
 
 				d = {**categories_score, **count_location}		
 				final_locations_score = self.compute_score(locations, d)
 
-				d = {**count_activities, **att_verbs}#, **count_attributes}
+				d = {**count_activities, **att_verbs}
 				final_activities_score = self.compute_score(activities, d)
 
 				img_conf = (final_locations_score + final_objs_score + final_activities_score) / 3
@@ -81,12 +84,17 @@ class LMRTView(View):
 					url = img.file.url
 					name = img.file.name
 
+					evaluation_list[name] = img_conf
+
 					score = img_conf*100
 					image_list[name] = [ {'url': url, 'conf': score} ]
 
 				toc = time.clock()
 				#print("Processing time: ", (toc - tic))
 
+			img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1], reverse=True)
+			
+			self.evaluation(img_list_sorted[0:5])
 
 			return JsonResponse({"success": True, "queryset": image_list}, status=200)
 		else:
@@ -96,6 +104,29 @@ class LMRTView(View):
 
 		context = {}
 		return render(self.request, self.template_name, context)
+
+	def evaluation(self, img_list):
+
+		TP = 0
+
+		with open(os.path.join(settings.MEDIA_ROOT, 'ImageCLEF2020_dev_gt.txt'), 'r') as f:
+				lines = f.readlines()
+
+				for l in lines:
+					tmp = l.split(', ')
+					
+					if tmp[0] == '1':
+						print(tmp[1])
+						for img in img_list:
+							if tmp[1] == img[0]:
+								print("positivo", img[0])
+								TP = TP + 1
+
+
+		print("TP: ", TP)	
+		print("FP: ", len(img_list)-TP)
+
+		return 0
 
 	def attributes_filter(self, counts):
 
@@ -155,7 +186,7 @@ class LMRTView(View):
 	def compute_score(self, objects, d):
 		final_objs_score = 0
 		for word in objects:
-			w_lemma = word
+			w_lemma = word2lemma(word)
 			w_score = 0
 			i = 0
 			for con in d:
