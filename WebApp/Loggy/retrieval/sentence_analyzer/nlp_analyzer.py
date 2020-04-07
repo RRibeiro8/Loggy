@@ -15,6 +15,16 @@ def word2lemma(word):
 
 	return lista
 
+def word2lemma_pos(word):
+
+	doc = nlp(word)
+	lista = []
+
+	for token in doc:
+		lista.append((token.lemma_,token.pos_))
+
+	return lista
+
 def similarity(a, b):
 
 	word_a = nlp(a)
@@ -23,6 +33,8 @@ def similarity(a, b):
 	#print(a, b, score)
 
 	return score
+
+
 
 if __name__ == "__main__":
 

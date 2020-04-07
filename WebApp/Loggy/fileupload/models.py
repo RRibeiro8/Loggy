@@ -35,7 +35,7 @@ class LocationModel(models.Model):
     local_time = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        return self.image.slug
+        return self.tag
 
     class Meta:
         ordering = ['local_time',]

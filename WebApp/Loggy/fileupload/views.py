@@ -38,10 +38,15 @@ class ImageCreateView(CreateView):
 
         lt = datetime.strptime(img_data['local_time'], '%Y-%m-%d_%H:%M')
         local_time = lt.replace(tzinfo=pytz.timezone(img_data['timezone']))
-        LocationModel.objects.create(image=image, latitude=img_data['latitude'], longitude=img_data['longitude'], 
+        if img_data['location'] == "NULL":
+            LocationModel.objects.create(image=image, latitude=img_data['latitude'], longitude=img_data['longitude'], 
+                                    tag="Unknown", timezone=img_data['timezone'], local_time=local_time)
+        else:
+            LocationModel.objects.create(image=image, latitude=img_data['latitude'], longitude=img_data['longitude'], 
                                     tag=img_data['location'], timezone=img_data['timezone'], local_time=local_time)
 
-        ActivityModel.objects.create(image=image, tag=img_data['activity'])
+        if img_data['activity'] != "NULL":
+            ActivityModel.objects.create(image=image, tag=img_data['activity'])
 
         for attr in img_data['atributtes']:
             AttributesModel.objects.create(image=image, tag=attr)

@@ -9,7 +9,7 @@ from django.core import serializers
 from .models import TopicModel
 
 from collections import Counter
-from .sentence_analyzer.nlp_analyzer import similarity, word2lemma
+from .sentence_analyzer.nlp_analyzer import similarity, word2lemma, word2lemma_pos
 
 from tqdm import tqdm
 import numpy as np
@@ -61,15 +61,17 @@ class LMRTView(View):
 				categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
 				#####
 
+				att_verbs, att_nouns = self.attributes_filter(count_attributes)
+
 				tic = time.clock()
 
-				d = {**concepts_score}
+				d = {**concepts_score, **att_nouns}
 				final_objs_score = self.compute_score(objects, d)
 
 				d = {**categories_score, **count_location}		
 				final_locations_score = self.compute_score(locations, d)
 
-				d = {**count_activities, **count_attributes}
+				d = {**count_activities, **att_verbs}#, **count_attributes}
 				final_activities_score = self.compute_score(activities, d)
 
 				img_conf = (final_locations_score + final_objs_score + final_activities_score) / 3
@@ -94,6 +96,21 @@ class LMRTView(View):
 
 		context = {}
 		return render(self.request, self.template_name, context)
+
+	def attributes_filter(self, counts):
+
+		verbs = {}
+		nouns = {}
+		for word in counts:
+			lista = word2lemma_pos(word)
+			if len(lista) == 1:
+				attribute = lista[0]
+				if attribute[1] == "VERB":
+					verbs[attribute[0]] = counts[word]
+				if attribute[1] == "NOUN":
+					nouns[attribute[0]] = counts[word]
+
+		return verbs, nouns
 
 	def retrieve_scores(self, counts, img_at):
 		toreturn = {}
@@ -138,7 +155,7 @@ class LMRTView(View):
 	def compute_score(self, objects, d):
 		final_objs_score = 0
 		for word in objects:
-			w_lemma = word2lemma(word)
+			w_lemma = word
 			w_score = 0
 			i = 0
 			for con in d:
@@ -186,6 +203,7 @@ class GTView(View):
 
 			topic_title = request.POST.getlist('data')[0]
 
+
 			obj = self.model.objects.filter(title=topic_title)[0]
 
 			image_list = {}
@@ -195,14 +213,17 @@ class GTView(View):
 
 				for l in lines:
 					tmp = l.split(', ')
-
+	
 					if tmp[0] == obj.topic_id:
 
-						img = ImageModel.objects.filter(slug=tmp[1])[0]
-						url = img.file.url
-						name = img.file.name
+						img_objs = ImageModel.objects.filter(slug=tmp[1])
+						if len(img_objs) > 0:
+							img = img_objs[0]
 
-						image_list[name] = url
+							url = img.file.url
+							name = img.file.name
+
+							image_list[name] = url
 
 
 			context = { "success": True,
