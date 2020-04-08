@@ -210,7 +210,7 @@
                   </div>  
 
                   <div class="chart tab-pane" id="evaluation" style="position: relative;">
-                  <div id="evalutionlist">
+                  <div id="evaluationlist">
                   </div>                    
                   </div>  
                  </div>
@@ -326,7 +326,9 @@
      other_tags = [];
      $('#links').html("");
      $('#showimagelist').html("");
+     $('#evaluationlist').html("");
       });
+
 
   $("#submit-tags").submit(function(e){
      e.preventDefault();
@@ -337,6 +339,8 @@
                 success: function (data) {
                   //alert("Success");
                   images = data['queryset']
+
+                  evaluation = data['evaluation']
 
                   var gallery_html = ""
 
@@ -371,7 +375,23 @@
                   $('#dtBasicExample').DataTable();
                   //$('.dataTables_length').addClass('bs-select');
 
-                  $('#evaluationlist').html("Evaluation Metrics");
+                  var metrics_html = "<table class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                  + "<th class='th-sm'>Top</th>" 
+                  + "<th class='th-sm'>Recall</th>" 
+                  + "<th class='th-sm'>Precision</th>" 
+                  + "<th class='th-sm'>F1 Score</th>"
+                  + "</tr></thead><tbody>" 
+                  + "<tr><td>5</td> <td>" + evaluation['Top5'][0]['recall'] + "</td> <td>" + evaluation['Top5'][0]['precision'] + "</td> <td>" + evaluation['Top5'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>10</td> <td>" + evaluation['Top10'][0]['recall'] + "</td> <td>" + evaluation['Top10'][0]['precision'] + "</td> <td>" + evaluation['Top10'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>20</td> <td>" + evaluation['Top20'][0]['recall'] + "</td> <td>" + evaluation['Top20'][0]['precision'] + "</td> <td>" + evaluation['Top20'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>30</td> <td>" + evaluation['Top30'][0]['recall'] + "</td> <td>" + evaluation['Top30'][0]['precision'] + "</td> <td>" + evaluation['Top30'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>40</td> <td>" + evaluation['Top40'][0]['recall'] + "</td> <td>" + evaluation['Top40'][0]['precision'] + "</td> <td>" + evaluation['Top40'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>50</td> <td>" + evaluation['Top50'][0]['recall'] + "</td> <td>" + evaluation['Top50'][0]['precision'] + "</td> <td>" + evaluation['Top50'][0]['f1_score'] + "</td> </tr>"
+                  +"</tbody></table>";
+
+
+
+                  $('#evaluationlist').html(metrics_html);
 
 
                 },

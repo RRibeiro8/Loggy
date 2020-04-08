@@ -66,7 +66,7 @@ class LMRTView(View):
 
 				att_verbs, att_nouns = self.attributes_filter(count_attributes)
 
-				tic = time.clock()
+				#tic = time.clock()
 
 				d = {**concepts_score}
 				final_objs_score = self.compute_score(objects, d)
@@ -84,19 +84,32 @@ class LMRTView(View):
 					url = img.file.url
 					name = img.file.name
 
-					evaluation_list[name] = img_conf
+					evaluation_list[img.slug] = img_conf
 
 					score = img_conf*100
 					image_list[name] = [ {'url': url, 'conf': score} ]
 
-				toc = time.clock()
+				#toc = time.clock()
 				#print("Processing time: ", (toc - tic))
 
+			evaluation_data = {}
 			img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1], reverse=True)
-			
-			self.evaluation(img_list_sorted[0:5])
 
-			return JsonResponse({"success": True, "queryset": image_list}, status=200)
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:5], "1")
+			evaluation_data["Top5"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:10], "1")
+			evaluation_data["Top10"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:20], "1")
+			evaluation_data["Top20"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:30], "1")
+			evaluation_data["Top30"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:40], "1")
+			evaluation_data["Top40"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:50], "1")
+			evaluation_data["Top50"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+
+
+			return JsonResponse({"success": True, "queryset": image_list, "evaluation": evaluation_data}, status=200)
 		else:
 			return JsonResponse({"success": False}, status=400)
 
@@ -105,28 +118,46 @@ class LMRTView(View):
 		context = {}
 		return render(self.request, self.template_name, context)
 
-	def evaluation(self, img_list):
+	def evaluation(self, img_list, topic_id):
 
 		TP = 0
+		total_clusters = []
+		clusters = []
+		X = len(img_list)
 
 		with open(os.path.join(settings.MEDIA_ROOT, 'ImageCLEF2020_dev_gt.txt'), 'r') as f:
 				lines = f.readlines()
 
 				for l in lines:
-					tmp = l.split(', ')
+					tmp = l.replace("\n", "")
+					tmp = tmp.split(', ')
 					
-					if tmp[0] == '1':
-						print(tmp[1])
+					if tmp[0] == topic_id:
+						#print(tmp[1])
+						if tmp[2] not in total_clusters:
+							total_clusters.append(tmp[2])
+						
 						for img in img_list:
+							#print(tmp[1], img[0])
 							if tmp[1] == img[0]:
-								print("positivo", img[0])
+								if tmp[2] not in clusters:
+									clusters.append(tmp[2])
+								#print("positivo", img[0], tmp[2])
 								TP = TP + 1
 
+		N = len(clusters)
+		Ngt = len(total_clusters)
+		R = N/Ngt
+		P = TP/X
+		F1 = 2 * ((P*R)/(P+R))
 
-		print("TP: ", TP)	
-		print("FP: ", len(img_list)-TP)
-
-		return 0
+		return R, P, F1
+		#print("Total Number of clusters: ", total_clusters, Ngt)
+		#print("Clusters in images: ", clusters, N)
+		#print("Cluster Recall: ", R)
+		#print("TP: ", TP)	
+		#print("Precision: ", P)
+		#print("F1-score: ", F1)
 
 	def attributes_filter(self, counts):
 
@@ -190,9 +221,9 @@ class LMRTView(View):
 			w_score = 0
 			i = 0
 			for con in d:
-				##if we wanto to filter more, we can treshold the similarity
+				##if we wanto to filter more, we can treshold the similarity (sim_score and con_score)
 				sim_score = similarity(w_lemma[0], con)
-				if sim_score < 0.5:
+				if sim_score <= 0:
 					sim_score = 0
 
 				if d[con] >= 1:
@@ -201,7 +232,7 @@ class LMRTView(View):
 					con_score = d[con]*sim_score
 				#print(w_lemma[0], con, con_score)
 
-				if con_score >= 0.4:
+				if con_score >= 0:
 					w_score = (w_score + con_score)
 					i += 1
 
