@@ -32,17 +32,11 @@ class LMRTView(View):
 			objects = request.POST.getlist('obj_tags[]')
 			locations = request.POST.getlist('loc_tags[]')
 			activities = request.POST.getlist('act_tags[]')
-			timedates = request.POST.getlist('other_tags[]')
+			topic_id = request.POST.getlist('topic_id')[0]
 
 			images_set = ImageModel.objects.all()
 			image_list = {}
 			queryset = {}
-
-			#print(new_objs)
-			#print(locations)
-			#print(new_act)
-			#print(timedates)
-			### 
 
 			evaluation_list = {}
 
@@ -95,7 +89,6 @@ class LMRTView(View):
 			evaluation_data = {}
 			img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1], reverse=True)
 
-			topic_id = "2"
 			recall, precision, f1_score = self.evaluation(img_list_sorted[0:5], topic_id)
 			evaluation_data["Top5"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
 			recall, precision, f1_score = self.evaluation(img_list_sorted[0:10], topic_id)
@@ -116,7 +109,8 @@ class LMRTView(View):
 
 	def get(self, request, *args, **kwargs):
 
-		context = {}
+		topicset = TopicModel.objects.all()
+		context = { 'topics': topicset }
 		return render(self.request, self.template_name, context)
 
 	def evaluation(self, img_list, topic_id):
