@@ -95,17 +95,18 @@ class LMRTView(View):
 			evaluation_data = {}
 			img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1], reverse=True)
 
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:5], "1")
+			topic_id = "2"
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:5], topic_id)
 			evaluation_data["Top5"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:10], "1")
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:10], topic_id)
 			evaluation_data["Top10"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:20], "1")
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:20], topic_id)
 			evaluation_data["Top20"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:30], "1")
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:30], topic_id)
 			evaluation_data["Top30"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:40], "1")
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:40], topic_id)
 			evaluation_data["Top40"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:50], "1")
+			recall, precision, f1_score = self.evaluation(img_list_sorted[0:50], topic_id)
 			evaluation_data["Top50"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
 
 

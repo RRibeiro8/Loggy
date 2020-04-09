@@ -1,0 +1,415 @@
+
+{% load static %}
+
+{% block styles %}
+
+<link rel="stylesheet" href="{% static 'gallery/css/blueimp-gallery.min.css' %}" />
+
+<link rel="stylesheet" href="{% static 'gallery/css/gallery.css' %}" />
+
+<link rel="stylesheet" type="text/css" href="{% static 'retrieval/DataTables/datatables.min.css' %}"/>
+
+<link rel="stylesheet" href="{% static 'retrieval/css/table.css' %}" />
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">Lifelog Moment Retrieval Task Development</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Loggy</a></li>
+              <li class="breadcrumb-item active">LMRT Dev</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Main row -->
+        <form method="POST" id="submit-tags"> {% csrf_token %}
+        <div class="row">
+          
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Objects</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="row">
+                  
+                    <div class="input-group input-group-md">
+                      <input type="text" class="form-control" id="object-tag">
+                      <span class="input-group-append">
+                        <button type="button" class="btn btn-info btn-flat" id="add_object">ADD</button>
+                      </span>
+                    </div>             
+                </div>
+                <!-- /input-group -->
+                <div class="row">
+                  <table class="table" id="object-table">
+                    <tbody>
+                      
+                    </tbody>                    
+                  </table>
+
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Locations</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="input-group input-group-md">
+                  <input type="text" class="form-control" id="location-tag">
+                  <span class="input-group-append">
+                    <button type="button" class="btn btn-info btn-flat" id="add_location">ADD</button>
+                  </span>
+                </div>
+                <!-- /input-group -->
+                <div class="row">
+                  <table class="table" id="location-table">
+                    <tbody>
+                      
+                    </tbody>                    
+                  </table>
+
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Activities</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="input-group input-group-md">
+                  <input type="text" class="form-control" id="activity-tag">
+                  <span class="input-group-append">
+                    <button type="button" class="btn btn-info btn-flat" id="add_activity">ADD</button>
+                  </span>
+                </div>
+                <!-- /input-group -->
+                <div class="row">
+                  <table class="table" id="activity-table">
+                    <tbody>
+                      
+                    </tbody>                    
+                  </table>
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+          <div class="col-md-3">
+            <!-- Input addon -->
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Date/Time</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="input-group input-group-md">
+                  <input type="text" class="form-control" id="other-tag">
+                  <span class="input-group-append">
+                    <button type="button" class="btn btn-info btn-flat" id="add_other">ADD</button>
+                  </span>
+                </div>
+                <!-- /input-group -->
+                <div class="row">
+                  <table class="table" id="other-table">
+                    <tbody>
+                      
+                    </tbody>                    
+                  </table>
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+        
+        </div>
+        <!-- /.row -->
+        <div class="row">
+          <div class="card-body">
+            
+              <button type="reset" class="btn btn-block bg-gradient-primary btn-lg" id="reset-button">Refresh</button>
+              <button type="submit" class="btn btn-block bg-gradient-success btn-lg">Submit</button>
+           
+          </div>
+        </div>
+         </form>
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-th mr-1"></i>
+                  Results
+                </h3>
+                <div class="card-tools">
+                  <ul class="nav nav-pills ml-auto">
+                    <li class="nav-item">
+                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Images</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#sales-chart" data-toggle="tab">List</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#evaluation" data-toggle="tab">Metrics</a>
+                    </li>
+                  </ul>
+                </div>
+              </div><!-- /.card-header -->
+              <div class="card-body">
+
+
+            
+                  <div class="tab-content p-0">
+                  <div class="tab-pane active" id="revenue-chart"
+                       style="position: relative;">
+                      <div id='links' class='links'>
+                  </div>                     
+                   </div>
+                  <div class="chart tab-pane" id="sales-chart" style="position: relative;">
+                  <div id="showimagelist">
+                  </div>                    
+                  </div>  
+
+                  <div class="chart tab-pane" id="evaluation" style="position: relative;">
+                  <div id="evaluationlist">
+                  </div>                    
+                  </div>  
+                 </div>
+               
+              </div><!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+            </div>
+        </div>
+      </div><!--/. container-fluid -->
+    </section>
+    <!-- /.content -->
+
+    <!-- The Gallery as lightbox dialog, should be a document body child element -->
+  <div id="blueimp-gallery" class="blueimp-gallery">
+    <div class="slides"></div>
+    <h3 class="title"></h3>
+    <a class="prev">‹</a>
+    <a class="next">›</a>
+    <a class="close">×</a>
+    <ol class="indicator"></ol>
+  </div>
+	
+
+{% endblock %}
+
+{% block javascripts %}
+
+<script type="text/javascript" src="{% static 'retrieval/DataTables/datatables.min.js' %}"></script>
+
+<script type="text/javascript">
+
+  var obj_tags = [];
+
+  $('#add_object').click(function(){
+
+    obj = $('#object-tag').val();
+    obj_tags.push(obj);
+
+    var t = "<tbody>";
+    for (var i=0; i<obj_tags.length; i++)
+    {
+      t += "<tr><td>" + obj_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#object-table').html(t);
+
+  });
+
+  var loc_tags = [];
+
+  $('#add_location').click(function(){
+
+    loc = $('#location-tag').val();
+    loc_tags.push(loc);
+
+    var t = "<tbody>";
+    for (var i=0; i<loc_tags.length; i++)
+    {
+      t += "<tr><td>" + loc_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#location-table').html(t);
+
+  });
+
+  var act_tags = [];
+
+  $('#add_activity').click(function(){
+
+    act = $('#activity-tag').val();
+    act_tags.push(act);
+
+    var t = "<tbody>";
+    for (var i=0; i<act_tags.length; i++)
+    {
+      t += "<tr><td>" + act_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#activity-table').html(t);
+
+  });
+
+  var other_tags = [];
+
+  $('#add_other').click(function(){
+
+    other = $('#other-tag').val();
+    other_tags.push(other);
+
+    var t = "<tbody>";
+    for (var i=0; i<other_tags.length; i++)
+    {
+      t += "<tr><td>" + other_tags[i] + "</td></tr>";
+    }
+    t += "</tbody>";
+    
+    $('#other-table').html(t);
+
+  });
+
+  $("#reset-button").click(function(){
+     $('#object-table').html("");
+     $('#location-table').html("");
+     $('#activity-table').html("");
+     $('#other-table').html("");
+     obj_tags = [];
+     loc_tags = [];
+     act_tags = [];
+     other_tags = [];
+     $('#links').html("");
+     $('#showimagelist').html("");
+     $('#evaluationlist').html("");
+      });
+
+
+  $("#submit-tags").submit(function(e){
+     e.preventDefault();
+        $.ajax({
+                type: 'POST',
+                url: ".",
+                data: {obj_tags, loc_tags, act_tags, other_tags, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+                success: function (data) {
+                  //alert("Success");
+                  images = data['queryset']
+
+                  evaluation = data['evaluation']
+
+                  var gallery_html = ""
+
+                  for(var key in images)
+                  {
+                   
+                    gallery_html += "<a href='" + images[key][0]['url']+ "' title='" + key + "'>"
+                    gallery_html += "<img src='" + images[key][0]['url'] + "' alt='" + key + "' id='imgGallery'/> </a>"
+                    //console.log(images[key])
+                  }
+
+                  $('#links').html(gallery_html);
+
+                  var list_html = "<table id='dtBasicExample' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                  + "<th class='th-sm'>Images</th>" 
+                  + "<th class='th-sm'>URL</th>" 
+                  + "<th class='th-sm'>Confidence</th>" 
+                  + "</tr></thead><tbody>";
+
+                  for(var key in images)
+                  {
+                    list_html += "<tr><td><a href='" + images[key][0]['url'] + "' title='" + key + "'>"
+                                  + "<img style='max-width:80px; max-height:80px;' src='" + images[key][0]['url'] + "'></a></td>"
+                                  + "<td><a href='" + images[key][0]['url'] + "' title='" + key + "' >" + key + "</a></td>"
+                                  +  "<td><span class='size'>" + images[key][0]['conf'] + "%</span></td></tr>" ;          
+                  }
+
+                  list_html += "</tbody></table> ";
+                    
+                  $('#showimagelist').html(list_html);
+
+                  $('#dtBasicExample').DataTable();
+                  //$('.dataTables_length').addClass('bs-select');
+
+                  var metrics_html = "<table class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                  + "<th class='th-sm'>Top</th>" 
+                  + "<th class='th-sm'>Recall</th>" 
+                  + "<th class='th-sm'>Precision</th>" 
+                  + "<th class='th-sm'>F1 Score</th>"
+                  + "</tr></thead><tbody>" 
+                  + "<tr><td>5</td> <td>" + evaluation['Top5'][0]['recall'] + "</td> <td>" + evaluation['Top5'][0]['precision'] + "</td> <td>" + evaluation['Top5'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>10</td> <td>" + evaluation['Top10'][0]['recall'] + "</td> <td>" + evaluation['Top10'][0]['precision'] + "</td> <td>" + evaluation['Top10'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>20</td> <td>" + evaluation['Top20'][0]['recall'] + "</td> <td>" + evaluation['Top20'][0]['precision'] + "</td> <td>" + evaluation['Top20'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>30</td> <td>" + evaluation['Top30'][0]['recall'] + "</td> <td>" + evaluation['Top30'][0]['precision'] + "</td> <td>" + evaluation['Top30'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>40</td> <td>" + evaluation['Top40'][0]['recall'] + "</td> <td>" + evaluation['Top40'][0]['precision'] + "</td> <td>" + evaluation['Top40'][0]['f1_score'] + "</td> </tr>"
+                  + "<tr><td>50</td> <td>" + evaluation['Top50'][0]['recall'] + "</td> <td>" + evaluation['Top50'][0]['precision'] + "</td> <td>" + evaluation['Top50'][0]['f1_score'] + "</td> </tr>"
+                  +"</tbody></table>";
+
+
+
+                  $('#evaluationlist').html(metrics_html);
+
+
+                },
+              });
+   });
+
+</script>
+
+<script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
+
+  <script>
+      document.getElementById('links').onclick = function(event) {
+        event = event || window.event
+        var target = event.target || event.srcElement,
+          link = target.src ? target.parentNode : target,
+          options = { index: link, event: event },
+          links = this.getElementsByTagName('a')
+        blueimp.Gallery(links, options)
+      }
+  </script>
+
+{% endblock %}
