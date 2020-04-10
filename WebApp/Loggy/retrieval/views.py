@@ -16,9 +16,11 @@ import numpy as np
 
 import os
 from django.conf import settings
+from django.db.models import Q
 
 import time
 import collections
+import datetime
 
 
 class LMRTView(View):
@@ -32,75 +34,144 @@ class LMRTView(View):
 			objects = request.POST.getlist('obj_tags[]')
 			locations = request.POST.getlist('loc_tags[]')
 			activities = request.POST.getlist('act_tags[]')
+			negatives = request.POST.getlist('neg_tags[]')
 			topic_id = request.POST.getlist('topic_id')[0]
+			daterange = request.POST.getlist('daterange')
+			years = request.POST.getlist('years[]')
+			daysweek = request.POST.getlist('daysweek[]')
 
-			images_set = ImageModel.objects.all()
 			image_list = {}
 			queryset = {}
-
-			evaluation_list = {}
-
-			for img in tqdm(images_set):
-
-				#print(img.date_time)
-				
-				### processing time -- 0.004 s
-				count_concepts = self.word_counter(img.conceptmodel_set.all())
-				count_location = self.word_counter(img.locationmodel_set.all())
-				count_activities = self.word_counter(img.activitymodel_set.all())
-				count_attributes = self.word_counter(img.attributesmodel_set.all())
-				count_categories = self.word_counter(img.categorymodel_set.all())
-				###
-				#print(img.file.name)
-
-				### processing time -- 0.01 s
-				concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
-				categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
-				#####
-
-				att_verbs, att_nouns = self.attributes_filter(count_attributes)
-
-				#tic = time.clock()
-
-				d = {**concepts_score}
-				final_objs_score = self.compute_score(objects, d)
-
-				d = {**categories_score, **count_location}		
-				final_locations_score = self.compute_score(locations, d)
-
-				d = {**count_activities, **att_verbs}
-				final_activities_score = self.compute_score(activities, d)
-
-				img_conf = (final_locations_score + final_objs_score + final_activities_score) / 3
-				#print("Final: ", final_objs_score, final_locations_score, img_conf)
-				if img_conf > 0:
-
-					url = img.file.url
-					name = img.file.name
-
-					evaluation_list[img.slug] = img_conf
-
-					score = img_conf*100
-					image_list[name] = [ {'url': url, 'conf': score} ]
-
-				#toc = time.clock()
-				#print("Processing time: ", (toc - tic))
-
 			evaluation_data = {}
-			img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1], reverse=True)
 
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:5], topic_id)
-			evaluation_data["Top5"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:10], topic_id)
-			evaluation_data["Top10"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:20], topic_id)
-			evaluation_data["Top20"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:30], topic_id)
-			evaluation_data["Top30"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:40], topic_id)
-			evaluation_data["Top40"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
-			recall, precision, f1_score = self.evaluation(img_list_sorted[0:50], topic_id)
-			evaluation_data["Top50"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+			images_set =  None
+
+			if( objects or locations or activities or negatives):
+
+				if( daterange or years or daysweek ):
+
+					filtro = Q()
+
+					if daterange:
+						dates = daterange[0].split(' - ')
+						start_date = datetime.datetime.strptime(dates[0], '%d/%m/%Y').strftime('%Y-%m-%d')
+						end_date =  datetime.datetime.strptime(dates[0], '%d/%m/%Y')
+						new_end = end_date + datetime.timedelta(days=1)
+
+						filtro = filtro | Q(date_time__range=[start_date, new_end.strftime('%Y-%m-%d')])
+					
+					if years:
+						for y in years:
+							filtro = filtro | Q(date_time__year=y)
+
+					if daysweek:
+						for d in daysweek:
+							filtro = filtro | Q(date_time__week_day=int(d))
+						#print("Days of Week: ", daysweek)
+
+					images_set = ImageModel.objects.filter(filtro)
+
+				else:
+					images_set = ImageModel.objects.all()
+
+				evaluation_list = {}
+
+				for img in tqdm(images_set):
+
+					scores = []
+
+					if negatives:
+
+						count_concepts = self.word_counter(img.conceptmodel_set.all())
+						concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
+						count_location = self.word_counter(img.locationmodel_set.all())
+						count_categories = self.word_counter(img.categorymodel_set.all())
+						categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
+						count_activities = self.word_counter(img.activitymodel_set.all())
+						count_attributes = self.word_counter(img.attributesmodel_set.all())
+
+
+						d = {**concepts_score, **categories_score, **count_activities, **count_attributes}
+						neg_score = self.compute_score(negatives, d)
+
+						if neg_score < 0.7:
+
+							if objects:
+								d = {**concepts_score}
+								scores.append(self.compute_score(objects, d))
+
+							if locations:
+								d = {**categories_score, **count_location}		
+								scores.append(self.compute_score(locations, d))
+							
+							if activities:
+								#print("activities: ", activities)
+								att_verbs, att_nouns = self.attributes_filter(count_attributes)
+								d = {**count_activities, **att_verbs}
+								scores.append(self.compute_score(activities, d))		
+
+					else:
+
+						if objects:
+							#print("Objects: ", objects)
+							count_concepts = self.word_counter(img.conceptmodel_set.all())
+							concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
+							d = {**concepts_score}
+							scores.append(self.compute_score(objects, d))
+
+						if locations:
+							#print("locations: ", locations)
+							count_location = self.word_counter(img.locationmodel_set.all())
+							count_categories = self.word_counter(img.categorymodel_set.all())
+							categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
+							d = {**categories_score, **count_location}		
+							scores.append(self.compute_score(locations, d))
+						
+						if activities:
+							#print("activities: ", activities)
+							count_activities = self.word_counter(img.activitymodel_set.all())
+							count_attributes = self.word_counter(img.attributesmodel_set.all())
+							att_verbs, att_nouns = self.attributes_filter(count_attributes)
+							d = {**count_activities, **att_verbs}
+							scores.append(self.compute_score(activities, d))
+
+					img_conf = 0
+					for s in scores:
+						img_conf = img_conf + s
+					
+					if (len(scores) > 0):
+						img_conf = img_conf / len(scores)
+				
+					if img_conf > 0:
+
+						url = img.file.url
+						name = img.file.name
+
+						evaluation_list[img.slug] = img_conf
+
+						score = img_conf*100
+						image_list[name] = [ {'url': url, 'conf': score} ]
+
+					#toc = time.clock()
+					#print("Processing time: ", (toc - tic))
+
+				evaluation_data = {}
+
+				if evaluation_list:
+					img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1], reverse=True)
+
+					recall, precision, f1_score = self.evaluation(img_list_sorted[0:5], topic_id)
+					evaluation_data["Top5"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+					recall, precision, f1_score = self.evaluation(img_list_sorted[0:10], topic_id)
+					evaluation_data["Top10"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+					recall, precision, f1_score = self.evaluation(img_list_sorted[0:20], topic_id)
+					evaluation_data["Top20"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+					recall, precision, f1_score = self.evaluation(img_list_sorted[0:30], topic_id)
+					evaluation_data["Top30"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+					recall, precision, f1_score = self.evaluation(img_list_sorted[0:40], topic_id)
+					evaluation_data["Top40"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
+					recall, precision, f1_score = self.evaluation(img_list_sorted[0:50], topic_id)
+					evaluation_data["Top50"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
 
 
 			return JsonResponse({"success": True, "queryset": image_list, "evaluation": evaluation_data}, status=200)
@@ -147,12 +218,6 @@ class LMRTView(View):
 		F1 = 2 * ((P*R)/(P+R))
 
 		return R, P, F1
-		#print("Total Number of clusters: ", total_clusters, Ngt)
-		#print("Clusters in images: ", clusters, N)
-		#print("Cluster Recall: ", R)
-		#print("TP: ", TP)	
-		#print("Precision: ", P)
-		#print("F1-score: ", F1)
 
 	def attributes_filter(self, counts):
 
@@ -214,29 +279,25 @@ class LMRTView(View):
 		for word in objects:
 			w_lemma = word2lemma(word)
 			w_score = 0
-			i = 0
 			for con in d:
 				##if we wanto to filter more, we can treshold the similarity (sim_score and con_score)
-				sim_score = similarity(w_lemma[0], con)
-				if sim_score <= 0:
-					sim_score = 0
 
-				if d[con] >= 1:
-					con_score = 1*sim_score
-				else:
-					con_score = d[con]*sim_score
-				#print(w_lemma[0], con, con_score)
+				if d[con] > 0:
+					sim_score = similarity(w_lemma[0], con)
+					if sim_score <= 0:
+						sim_score = 0
 
-				if con_score >= 0:
-					w_score = (w_score + con_score)
-					i += 1
+					if d[con] >= 1:
+						con_score = 1*sim_score
+					else:
+						con_score = d[con]*sim_score
+					#print(w_lemma[0], con, con_score)
 
-			if i > 0:
-				w_score = w_score / i
+					if con_score > w_score:
+						w_score = con_score
 
-			#print(w_lemma[0], w_score)
-
-			final_objs_score = final_objs_score + w_score
+			if w_score > 0:
+				final_objs_score = final_objs_score + w_score 
 		
 		if len(objects) > 0:
 			final_objs_score = final_objs_score / len(objects)

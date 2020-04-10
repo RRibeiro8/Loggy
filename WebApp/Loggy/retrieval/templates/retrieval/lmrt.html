@@ -16,6 +16,9 @@
 
 <link href="{% static 'retrieval/select2/css/select2.min.css' %}" rel="stylesheet" />
 
+<!-- daterange picker -->
+<link rel="stylesheet" href="{% static 'retrieval/daterangepicker/daterangepicker.css' %}">
+
 {% endblock %}
 
 
@@ -53,7 +56,7 @@
               <div class="card-header">
                 <div class="card-title">
                   <label> TOPIC - </label>
-                  <select class="form-control select2" id="select2" >
+                  <select class="form-control select2" id="select2" data-placeholder="Select Topic">
                       <option></option>
                       {% for top in topics %}
                         <option value='{ "id": "{{ top.id }}", "title": "{{ top.title }}", "desc": "{{ top.description }}", "nar": "{{ top.narrative }}" }' >{{top.title}}</option>
@@ -66,8 +69,9 @@
                  
                 </div>
                 <div class="row">
-                  <div class="col-3">
-                    <div class="form-group row">
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Objects:</label>
                       <input type="form-control" name="object-tag" id="object-tag" placeholder="object" style="vertical-align: bottom">
                       <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_object"><i class="fas fa-plus"></i></button>
                     </div>
@@ -78,8 +82,9 @@
 
                   </div>
 
-                  <div class="col-3">
-                    <div class="form-group row">
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Activities:</label>
                       <input type="form-control" name="act-tag" id="act-tag" placeholder="activity" style="vertical-align: bottom">
                       <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_act"><i class="fas fa-plus"></i></button>
                     </div>
@@ -90,8 +95,9 @@
 
                   </div>
 
-                  <div class="col-3">
-                    <div class="form-group row">
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Locations:</label>
                       <input type="form-control" name="loc-tag" id="loc-tag" placeholder="location" style="vertical-align: bottom">
                       <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_loc"><i class="fas fa-plus"></i></button>
                     </div>
@@ -101,13 +107,76 @@
                     </div>
 
                   </div>
+
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Irrelevant:</label>
+                      <input type="form-control" name="neg-tag" id="neg-tag" placeholder="negative" style="vertical-align: bottom">
+                      <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_neg"><i class="fas fa-plus"></i></button>
+                    </div>
+                    
+                    <div id="neg">
+
+                    </div>
+
+                  </div>
+
+                    <div class="col">
+                      <div class="form-group">
+                      <label>Date range:</label>
+
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">
+                            <i class="far fa-calendar-alt"></i>
+                          </span>
+                        </div>
+                        <input type="text" class="form-control float-right" id="reservation">
+                      </div>
+                      <!-- /.input group -->
+                    </div>
+                    <!-- /.form group -->
+
+                    <div class="form-group">
+                      <label>Years:</label>
+
+                      <select class="select2" id="select2year" multiple="multiple" data-placeholder="Select the Years" style="width: 100%;">
+                      <option>2020</option>
+                      <option>2019</option>
+                      <option>2018</option>
+                      <option>2017</option>
+                      <option>2016</option>
+                      <option>2015</option>     
+                   </select>
+                  
+                    </div>
+                    <!-- /.form group -->
+
+                    <div class="form-group">
+                      <label>Day of Week:</label>
+
+                      <select class="select2" id="select2weekday" multiple="multiple" data-placeholder="Select Days of the Week" style="width: 100%;">
+                      <option value="2">Monday</option>
+                      <option value="3">Tuesday</option>
+                      <option value="4">Wednesday</option>
+                      <option value="5">Thursday</option>
+                      <option value="6">Friday</option>
+                      <option value="7">Saturday</option>  
+                      <option value="1">Sunday</option>    
+                   </select>
+                      <!-- /.input group -->
+                    </div>
+                    <!-- /.form group -->
+                  </div>
                 </div>
+
+               
+              </div>
               
               </div>
             </div>
           </div>
         
-        </div>
         <!-- /.row -->
         <div class="row">
           <div class="card-body">
@@ -189,15 +258,38 @@
 
 <script type="text/javascript" src="{% static 'retrieval/DataTables/datatables.min.js' %}"></script>
 
-<script src="{% static 'retrieval/select2/js/select2.min.js' %}"></script>
+<script src="{% static 'retrieval/select2/js/select2.full.min.js' %}"></script>
+
+<script src="{% static 'retrieval/daterangepicker/moment.min.js' %}"></script>
+
+<script src="{% static 'retrieval/daterangepicker/daterangepicker.js' %}"></script>
 
 <script type="text/javascript">
 
 
+  //Date range picker
+  $('#reservation').daterangepicker({
+        autoUpdateInput: false,
+        locale: {
+          cancelLabel: 'Clear',
+          format: 'DD/MM/YYYY'
+      }
+  });
+  $('#reservation').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+  });
+
+  $('#reservation').on('cancel.daterangepicker', function(ev, picker) {
+      $(this).val('');
+  });
+
   $('#select2').select2({
         theme: "classic",
-        placeholder: "Select Topic",
       });
+
+  $('#select2year').select2();
+
+  $('#select2weekday').select2();
 
   var obj_tags = [];
 
@@ -212,7 +304,7 @@
       var t = "";
       for (var i=0; i<obj_tags.length; i++)
       {
-        t += "<div class='row'> <div class='form-group'>" 
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
         + "<input type='text' readonly class='form-control-plaintext' value='" + obj_tags[i] + "' style='vertical-align: bottom'></div>"
         + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_obj' ><i class='fas fa-minus'></i></button></div>";
       }
@@ -249,7 +341,7 @@
       var t = "";
       for (var i=0; i<loc_tags.length; i++)
       {
-        t += "<div class='row'> <div class='form-group'>" 
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
         + "<input type='text' readonly class='form-control-plaintext' value='" + loc_tags[i] + "' style='vertical-align: bottom'></div>"
         + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_loc' ><i class='fas fa-minus'></i></button></div>";
       }
@@ -285,7 +377,7 @@
       var t = "";
       for (var i=0; i<act_tags.length; i++)
       {
-        t += "<div class='row'> <div class='form-group'>" 
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
         + "<input type='text' readonly class='form-control-plaintext' value='" + act_tags[i] + "' style='vertical-align: bottom'></div>"
         + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_act' ><i class='fas fa-minus'></i></button></div>";
       }
@@ -299,7 +391,6 @@
     
   });
 
-
   $(document).on('click','.btn_remove_act',function() {
     obj = $(this).parent('div').find('input').val();
 
@@ -308,18 +399,60 @@
     $(this).parent('div').remove();
     });
 
+
+  var neg_tags = [];
+
+  $('#add_neg').click(function(){
+
+    obj = $('#neg-tag').val();
+
+    if(obj && !neg_tags.includes(obj))
+    {
+      neg_tags.push(obj);
+
+      var t = "";
+      for (var i=0; i<neg_tags.length; i++)
+      {
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
+        + "<input type='text' readonly class='form-control-plaintext' value='" + neg_tags[i] + "' style='vertical-align: bottom'></div>"
+        + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_neg' ><i class='fas fa-minus'></i></button></div>";
+      }
+      
+      $('#neg').html(t);
+
+      $('#neg-tag').val("");
+    }else{
+      $('#neg-tag').val("");
+    }
+    
+  });
+
+
+  $(document).on('click','.btn_remove_neg',function() {
+    obj = $(this).parent('div').find('input').val();
+
+    neg_tags = neg_tags.filter(item => item !== obj);
+
+    $(this).parent('div').remove();
+    });
+
   $("#reset-button").click(function(){
      $('#objects').html("");
      $('#loc').html("");
      $('#act').html("");
+     $('#neg').html("");
      obj_tags = [];
      loc_tags = [];
      act_tags = [];
+     neg_tags = [];
      $('#links').html("");
      $('#showimagelist').html("");
      $('#evaluationlist').html("");
      $('#showtopic').html("");
       $('#select2').val('').trigger('change');
+      $('#reservation').val('');
+      $('#select2year').val('').trigger('change');
+      $('#select2weekday').val('').trigger('change');
       });
 
   $('#select2').on('select2:select', function () {
@@ -331,91 +464,119 @@
     $('#objects').html("");
      $('#loc').html("");
      $('#act').html("");
+     $('#neg').html("");
      obj_tags = [];
      loc_tags = [];
      act_tags = [];
+     neg_tags = [];
      $('#links').html("");
      $('#showimagelist').html("");
      $('#evaluationlist').html("");
+     $('#reservation').val('');
+      $('#select2year').val('').trigger('change');
+      $('#select2weekday').val('').trigger('change');
 
 
   });
 
   $("#submit-tags").submit(function(e){
      e.preventDefault();
+
+    if($("#reservation").val())
+    {
+      var daterange = $("#reservation").val();
+    }
+    if($("#select2year").val().length > 0)
+    {
+      var years = $("#select2year").val();
+    }
+    if($("#select2weekday").val().length > 0)
+    {
+      var daysweek = $("#select2weekday").val();
+    }
+
      if($("#select2").val())
      {
-      topic =  JSON.parse($("#select2").val());
-      var topic_id = topic['id'];
-       if(topic_id)
-       {
+        topic =  JSON.parse($("#select2").val());
+        var topic_id = topic['id'];
+        if(topic_id)
+        {
           $.ajax({
                   type: 'POST',
                   url: ".",
-                  data: {topic_id, obj_tags, loc_tags, act_tags, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+                  data: {topic_id, obj_tags, loc_tags, act_tags, neg_tags, daterange, years, daysweek, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
                   beforeSend: function(){$("#loader").show();},
                   success: function (data) {
                     //alert("Success");
-                    images = data['queryset']
 
-                    evaluation = data['evaluation']
-
-                    var gallery_html = ""
-
-                    for(var key in images)
+                    if(!jQuery.isEmptyObject(data['queryset']))
                     {
-                     
-                      gallery_html += "<a href='" + images[key][0]['url']+ "' title='" + key + "'>"
-                      gallery_html += "<img src='" + images[key][0]['url'] + "' alt='" + key + "' id='imgGallery'/> </a>"
-                      //console.log(images[key])
+                      images = data['queryset']
+                      evaluation = data['evaluation']
+
+                      var gallery_html = ""
+
+                      for(var key in images)
+                      {
+                       
+                        gallery_html += "<a href='" + images[key][0]['url']+ "' title='" + key + "'>"
+                        gallery_html += "<img src='" + images[key][0]['url'] + "' alt='" + key + "' id='imgGallery'/> </a>"
+                        //console.log(images[key])
+                      }
+
+                      $('#links').html(gallery_html);
+
+                      var list_html = "<table id='dtBasicExample' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                      + "<th class='th-sm'>Images</th>" 
+                      + "<th class='th-sm'>URL</th>" 
+                      + "<th class='th-sm'>Confidence</th>" 
+                      + "</tr></thead><tbody>";
+
+                      for(var key in images)
+                      {
+                        list_html += "<tr><td><a href='" + images[key][0]['url'] + "' title='" + key + "'>"
+                                      + "<img style='max-width:80px; max-height:80px;' src='" + images[key][0]['url'] + "'></a></td>"
+                                      + "<td><a href='" + images[key][0]['url'] + "' title='" + key + "' >" + key + "</a></td>"
+                                      +  "<td><span class='size'>" + images[key][0]['conf'] + "%</span></td></tr>" ;          
+                      }
+
+                      list_html += "</tbody></table> ";
+                        
+                      $('#showimagelist').html(list_html);
+
+                      $('#dtBasicExample').DataTable();
+                      //$('.dataTables_length').addClass('bs-select');
+
+                      var metrics_html = "<table class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr><th class='th-sm'>Top</th><th class='th-sm'>Recall</th><th class='th-sm'>Precision</th><th class='th-sm'>F1 Score</th></tr></thead><tbody>" 
+                      + "<tr><td>5</td> <td>" + evaluation['Top5'][0]['recall'] + "</td> <td>" + evaluation['Top5'][0]['precision'] 
+                      + "</td> <td>" + evaluation['Top5'][0]['f1_score'] + "</td> </tr>"
+                      + "<tr><td>10</td> <td>" + evaluation['Top10'][0]['recall'] + "</td> <td>" + evaluation['Top10'][0]['precision']
+                      + "</td> <td>" + evaluation['Top10'][0]['f1_score'] + "</td> </tr>"
+                      + "<tr><td>20</td> <td>" + evaluation['Top20'][0]['recall'] + "</td> <td>" + evaluation['Top20'][0]['precision']
+                      + "</td> <td>" + evaluation['Top20'][0]['f1_score'] + "</td> </tr>"
+                      + "<tr><td>30</td> <td>" + evaluation['Top30'][0]['recall'] + "</td> <td>" + evaluation['Top30'][0]['precision']
+                      + "</td> <td>" + evaluation['Top30'][0]['f1_score'] + "</td> </tr>"
+                      + "<tr><td>40</td> <td>" + evaluation['Top40'][0]['recall'] + "</td> <td>" + evaluation['Top40'][0]['precision']
+                      + "</td> <td>" + evaluation['Top40'][0]['f1_score'] + "</td> </tr>"
+                      + "<tr><td>50</td> <td>" + evaluation['Top50'][0]['recall'] + "</td> <td>" + evaluation['Top50'][0]['precision']
+                      + "</td> <td>" + evaluation['Top50'][0]['f1_score'] + "</td> </tr></tbody></table>";
+
+
+
+                      $('#evaluationlist').html(metrics_html);
                     }
-
-                    $('#links').html(gallery_html);
-
-                    var list_html = "<table id='dtBasicExample' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
-                    + "<th class='th-sm'>Images</th>" 
-                    + "<th class='th-sm'>URL</th>" 
-                    + "<th class='th-sm'>Confidence</th>" 
-                    + "</tr></thead><tbody>";
-
-                    for(var key in images)
+                    else
                     {
-                      list_html += "<tr><td><a href='" + images[key][0]['url'] + "' title='" + key + "'>"
-                                    + "<img style='max-width:80px; max-height:80px;' src='" + images[key][0]['url'] + "'></a></td>"
-                                    + "<td><a href='" + images[key][0]['url'] + "' title='" + key + "' >" + key + "</a></td>"
-                                    +  "<td><span class='size'>" + images[key][0]['conf'] + "%</span></td></tr>" ;          
+                      $("#loader").hide();
                     }
-
-                    list_html += "</tbody></table> ";
-                      
-                    $('#showimagelist').html(list_html);
-
-                    $('#dtBasicExample').DataTable();
-                    //$('.dataTables_length').addClass('bs-select');
-
-                    var metrics_html = "<table class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
-                    + "<th class='th-sm'>Top</th>" 
-                    + "<th class='th-sm'>Recall</th>" 
-                    + "<th class='th-sm'>Precision</th>" 
-                    + "<th class='th-sm'>F1 Score</th>"
-                    + "</tr></thead><tbody>" 
-                    + "<tr><td>5</td> <td>" + evaluation['Top5'][0]['recall'] + "</td> <td>" + evaluation['Top5'][0]['precision'] + "</td> <td>" + evaluation['Top5'][0]['f1_score'] + "</td> </tr>"
-                    + "<tr><td>10</td> <td>" + evaluation['Top10'][0]['recall'] + "</td> <td>" + evaluation['Top10'][0]['precision'] + "</td> <td>" + evaluation['Top10'][0]['f1_score'] + "</td> </tr>"
-                    + "<tr><td>20</td> <td>" + evaluation['Top20'][0]['recall'] + "</td> <td>" + evaluation['Top20'][0]['precision'] + "</td> <td>" + evaluation['Top20'][0]['f1_score'] + "</td> </tr>"
-                    + "<tr><td>30</td> <td>" + evaluation['Top30'][0]['recall'] + "</td> <td>" + evaluation['Top30'][0]['precision'] + "</td> <td>" + evaluation['Top30'][0]['f1_score'] + "</td> </tr>"
-                    + "<tr><td>40</td> <td>" + evaluation['Top40'][0]['recall'] + "</td> <td>" + evaluation['Top40'][0]['precision'] + "</td> <td>" + evaluation['Top40'][0]['f1_score'] + "</td> </tr>"
-                    + "<tr><td>50</td> <td>" + evaluation['Top50'][0]['recall'] + "</td> <td>" + evaluation['Top50'][0]['precision'] + "</td> <td>" + evaluation['Top50'][0]['f1_score'] + "</td> </tr>"
-                    +"</tbody></table>";
-
-
-
-                    $('#evaluationlist').html(metrics_html);
-
+                    
+                    
 
                   },
-                  complete:function(data){$("#loader").hide();}
+                  complete:function(data){$("#loader").hide();},
                 });
-       }
+
+        }
      }
        
    });
@@ -423,6 +584,8 @@
 </script>
 
 <script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
+
+
 
   <script>
       document.getElementById('links').onclick = function(event) {
