@@ -1,11 +1,23 @@
 from django.db import models
 
+class ConceptModel(models.Model):
+
+    tag = models.CharField(max_length=255, blank=True)    
+
+    def __str__(self):
+        return self.tag
+
+    class Meta:
+        ordering = ['-tag']
+
+
 class ImageModel(models.Model):
 
     file = models.ImageField(upload_to="database/")
     slug = models.SlugField(max_length=50, blank=True)
     minute_id = models.CharField(max_length=255, blank=True)
     date_time = models.DateTimeField(blank=True, null=True)
+    concepts = models.ManyToManyField(ConceptModel, blank=True, through='ConceptScoreModel')#, related_name = 'Concept', through='ConceptScoreModel')
 
     def __str__(self):
         return self.slug
@@ -23,6 +35,12 @@ class ImageModel(models.Model):
         """delete -- Remove to leave file."""
         self.file.delete(False)
         super(ImageModel, self).delete(*args, **kwargs)
+
+class ConceptScoreModel(models.Model):
+    image = models.ForeignKey(ImageModel, on_delete=models.CASCADE, null=True)
+    concept = models.ForeignKey(ConceptModel, on_delete=models.CASCADE, null=True, blank=True)
+    score = models.FloatField(null=True)
+    box = models.CharField(max_length=255, blank=True)
 
 
 class LocationModel(models.Model):

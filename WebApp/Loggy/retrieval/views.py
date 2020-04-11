@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
 
-from fileupload.models import ImageModel, LocationModel
-from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel, ConceptModel)
+from fileupload.models import ImageModel, LocationModel, ConceptModel, ConceptScoreModel
+from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel)
 from django.core import serializers
 
 from .models import TopicModel
@@ -114,10 +114,8 @@ class LMRTView(View):
 
 						if objects:
 							#print("Objects: ", objects)
-							count_concepts = self.word_counter(img.conceptmodel_set.all())
-							concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
-							d = {**concepts_score}
-							scores.append(self.compute_score(objects, d))
+							img_concepts = img.concepts.all()
+							scores.append(self.concepts_compute_score(objects, img, img_concepts))
 
 						if locations:
 							#print("locations: ", locations)
@@ -141,7 +139,7 @@ class LMRTView(View):
 					
 					if (len(scores) > 0):
 						img_conf = img_conf / len(scores)
-				
+					
 					if img_conf > 0:
 
 						url = img.file.url
@@ -159,6 +157,7 @@ class LMRTView(View):
 
 				if evaluation_list:
 					img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1], reverse=True)
+					#print(img_list_sorted)
 
 					recall, precision, f1_score = self.evaluation(img_list_sorted[0:5], topic_id)
 					evaluation_data["Top5"] = [{ "recall": recall, "precision": precision, "f1_score": f1_score}]
@@ -184,6 +183,37 @@ class LMRTView(View):
 		context = { 'topics': topicset }
 		return render(self.request, self.template_name, context)
 
+	def concepts_compute_score(self, objects, img, img_concepts):
+
+		final_objs_score = 0
+		for word in objects:
+			w_lemma = word2lemma(word)
+			
+			w_score = 0
+			for con in img_concepts:
+				max_score = 0
+				con_score = 0
+				for score in ConceptScoreModel.objects.filter(image=img, concept=con):
+					if max_score < score.score:
+						max_score = score.score
+
+				if max_score > 0:
+					sim_score = similarity(w_lemma[0], con.tag)
+					if sim_score > 0:
+						con_score = max_score*sim_score
+					#print(w_lemma[0], con.tag, sim_score, max_score, con_score)
+
+				if con_score > w_score:
+					w_score = con_score
+
+			if w_score > 0:
+				final_objs_score = final_objs_score + w_score 
+		
+		if len(objects) > 0:
+			final_objs_score = final_objs_score / len(objects)
+
+		return final_objs_score
+
 	def evaluation(self, img_list, topic_id):
 
 		TP = 0
@@ -199,7 +229,6 @@ class LMRTView(View):
 					tmp = tmp.split(', ')
 					
 					if tmp[0] == topic_id:
-						#print(tmp[1])
 						if tmp[2] not in total_clusters:
 							total_clusters.append(tmp[2])
 						
@@ -213,9 +242,13 @@ class LMRTView(View):
 
 		N = len(clusters)
 		Ngt = len(total_clusters)
+
 		R = N/Ngt
 		P = TP/X
-		F1 = 2 * ((P*R)/(P+R))
+
+		F1 = 0
+		if (R != 0 or P != 0):
+			F1 = 2 * ((P*R)/(P+R))
 
 		return R, P, F1
 

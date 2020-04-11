@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.views.generic import CreateView, DeleteView, ListView
-from .models import (ImageModel, LocationModel) 
-from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel, ConceptModel)
+from .models import (ImageModel, LocationModel, ConceptModel, ConceptScoreModel) 
+from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel)
 from .response import JSONResponse, response_mimetype
 from .serialize import serialize
 
@@ -36,6 +36,24 @@ class ImageCreateView(CreateView):
                 
         form.save()
 
+        for con in img_data['concepts']:
+            p_string = ""
+            for p in img_data['concepts'][con]['box']:
+                p_string = p_string + str(p) + " " 
+
+            if (ConceptModel.objects.filter(tag=con)):
+                obj = ConceptModel.objects.get(tag=con)
+                #print("Existe...", obj)
+            else: 
+                obj = ConceptModel(tag=con)
+                obj.save()
+                #print("Não existe, criar...", obj)
+
+            #print(obj.imagemodel_set.all())
+            ConceptScoreModel.objects.create(image=image, concept=obj, score=img_data['concepts'][con]['score'], box=p_string)
+
+        #print(image.concepts.all())
+
         lt = datetime.strptime(img_data['local_time'], '%Y-%m-%d_%H:%M')
         local_time = lt.replace(tzinfo=pytz.timezone(img_data['timezone']))
         if img_data['location'] == "NULL":
@@ -56,12 +74,6 @@ class ImageCreateView(CreateView):
             cat_filtered = tmp[0].replace('_', ' ')
             CategoryModel.objects.create(image=image, tag=cat_filtered, score=img_data['categories'][cat])
 
-        for con in img_data['concepts']:
-            p_string = ""
-            for p in img_data['concepts'][con]['box']:
-                p_string = p_string + str(p) + " " 
-            ConceptModel.objects.create(image=image, tag=con, score=img_data['concepts'][con]['score'], box=p_string)
-    
         files = [serialize(image)]
         data = {'files': files}
         response = JSONResponse(data, mimetype=response_mimetype(self.request))
