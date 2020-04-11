@@ -188,7 +188,6 @@ class LMRTView(View):
 		final_objs_score = 0
 		for word in objects:
 			w_lemma = word2lemma(word)
-			
 			w_score = 0
 			for con in img_concepts:
 				max_score = 0

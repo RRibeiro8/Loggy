@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib import admin
 
 class ConceptModel(models.Model):
 
@@ -41,6 +42,15 @@ class ConceptScoreModel(models.Model):
     concept = models.ForeignKey(ConceptModel, on_delete=models.CASCADE, null=True, blank=True)
     score = models.FloatField(null=True)
     box = models.CharField(max_length=255, blank=True)
+
+class ConceptScoreModel_inline(admin.TabularInline):
+    model = ConceptScoreModel
+
+class ConceptModelAdmin(admin.ModelAdmin):
+    inlines = (ConceptScoreModel_inline,)
+
+class ImageModelAdmin(admin.ModelAdmin):
+    inlines = (ConceptScoreModel_inline,)
 
 
 class LocationModel(models.Model):
