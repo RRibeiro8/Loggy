@@ -15,15 +15,18 @@ def word2lemma(word):
 
 	return lista
 
-def word2lemma_pos(word):
+def one_word2lemma(word):
 
 	doc = nlp(word)
-	lista = []
 
-	for token in doc:
-		lista.append((token.lemma_,token.pos_))
-
-	return lista
+	lemma = None
+	if len(doc) <= 1:
+		for token in doc:
+			lemma = token.lemma_
+	if lemma == None:
+		return word
+	else:
+		return lemma
 
 def similarity(a, b):
 

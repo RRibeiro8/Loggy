@@ -1,7 +1,8 @@
 from django.http import HttpResponse
 from django.views.generic import CreateView, DeleteView, ListView
-from .models import (ImageModel, LocationModel, ConceptModel, ConceptScoreModel) 
-from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel)
+from .models import (ImageModel, LocationModel, ConceptModel, ConceptScoreModel, 
+                        LocationInfoModel, CategoryModel, CategoryScoreModel,
+                        ActivityModel, ActivityInfoModel, AttributesModel, AttributesInfoModel) 
 from .response import JSONResponse, response_mimetype
 from .serialize import serialize
 
@@ -10,6 +11,8 @@ import os
 from django.conf import settings
 from datetime import datetime
 import pytz
+
+from retrieval.sentence_analyzer.nlp_analyzer import one_word2lemma
 
 class ImageCreateView(CreateView):
     model = ImageModel
@@ -43,36 +46,65 @@ class ImageCreateView(CreateView):
 
             if (ConceptModel.objects.filter(tag=con)):
                 obj = ConceptModel.objects.get(tag=con)
-                #print("Existe...", obj)
             else: 
                 obj = ConceptModel(tag=con)
                 obj.save()
-                #print("Não existe, criar...", obj)
 
-            #print(obj.imagemodel_set.all())
-            ConceptScoreModel.objects.create(image=image, concept=obj, score=img_data['concepts'][con]['score'], box=p_string)
-
-        #print(image.concepts.all())
+            ConceptScoreModel.objects.create(image=image, tag=obj, score=img_data['concepts'][con]['score'], box=p_string)
 
         lt = datetime.strptime(img_data['local_time'], '%Y-%m-%d_%H:%M')
         local_time = lt.replace(tzinfo=pytz.timezone(img_data['timezone']))
+        location = None
         if img_data['location'] == "NULL":
-            LocationModel.objects.create(image=image, latitude=img_data['latitude'], longitude=img_data['longitude'], 
-                                    tag="Unknown", timezone=img_data['timezone'], local_time=local_time)
+            if (LocationModel.objects.filter(tag='Unknown')):
+                location = LocationModel.objects.get(tag='Unknown')
+            else:
+                location = LocationModel(tag='Unknown')
+                location.save()
         else:
-            LocationModel.objects.create(image=image, latitude=img_data['latitude'], longitude=img_data['longitude'], 
-                                    tag=img_data['location'], timezone=img_data['timezone'], local_time=local_time)
+            if (LocationModel.objects.filter(tag=img_data['location'])):
+                location = LocationModel.objects.get(tag=img_data['location'])   
+            else:
+                location = LocationModel(tag=img_data['location'])
+                location.save()
 
-        if img_data['activity'] != "NULL":
-            ActivityModel.objects.create(image=image, tag=img_data['activity'])
 
-        for attr in img_data['atributtes']:
-            AttributesModel.objects.create(image=image, tag=attr)
+        LocationInfoModel.objects.create(image=image, tag=location, latitude=img_data['latitude'], longitude=img_data['longitude'], 
+                                            timezone=img_data['timezone'], local_time=local_time)
 
         for cat in img_data['categories']:
             tmp = cat.split('/')
             cat_filtered = tmp[0].replace('_', ' ')
-            CategoryModel.objects.create(image=image, tag=cat_filtered, score=img_data['categories'][cat])
+
+            if (CategoryModel.objects.filter(tag=cat_filtered)):
+                category = CategoryModel.objects.get(tag=cat_filtered)
+            else:
+                category = CategoryModel(tag=cat_filtered)
+                category.save()
+            
+            CategoryScoreModel.objects.create(image=image, tag=category, score=img_data['categories'][cat])
+
+        activity = None
+        if img_data['activity'] != "NULL":
+            activity = one_word2lemma(img_data['activity'])
+            if (ActivityModel.objects.filter(tag=img_data['activity'])):
+                activity = ActivityModel.objects.get(tag=img_data['activity'])
+            else:
+                activity = ActivityModel(tag=img_data['activity'])
+                activity.save()
+
+        ActivityInfoModel.objects.create(image=image, tag=activity)
+
+        attribute = None
+        for attr in img_data['atributtes']:
+            lemma_attr = one_word2lemma(attr)
+            if (AttributesModel.objects.filter(tag=lemma_attr)):
+                attribute = AttributesModel.objects.get(tag=lemma_attr)
+            else:
+                attribute = AttributesModel(tag=lemma_attr)
+                attribute.save()
+
+        AttributesInfoModel.objects.create(image=image, tag=attribute)
 
         files = [serialize(image)]
         data = {'files': files}

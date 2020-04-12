@@ -2,14 +2,15 @@ from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
 
-from fileupload.models import ImageModel, LocationModel, ConceptModel, ConceptScoreModel
-from visualrecognition.models import (ActivityModel, AttributesModel, CategoryModel)
+from fileupload.models import (ImageModel, LocationModel, ConceptModel, ConceptScoreModel, 
+								CategoryModel, CategoryScoreModel, ActivityInfoModel, ActivityModel, 
+								AttributesModel, AttributesInfoModel)
 from django.core import serializers
 
 from .models import TopicModel
 
 from collections import Counter
-from .sentence_analyzer.nlp_analyzer import similarity, word2lemma, word2lemma_pos
+from .sentence_analyzer.nlp_analyzer import similarity, word2lemma
 
 from tqdm import tqdm
 import numpy as np
@@ -82,32 +83,45 @@ class LMRTView(View):
 
 					if negatives:
 
-						count_concepts = self.word_counter(img.conceptmodel_set.all())
-						concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
-						count_location = self.word_counter(img.locationmodel_set.all())
-						count_categories = self.word_counter(img.categorymodel_set.all())
-						categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
-						count_activities = self.word_counter(img.activitymodel_set.all())
-						count_attributes = self.word_counter(img.attributesmodel_set.all())
+						img_concepts = img.concepts.all()
+						d_concepts = self.create_dict(img_concepts, img, ConceptScoreModel.objects)
+						#count_concepts = self.word_counter(img.conceptmodel_set.all())
+						#concepts_score = self.retrieve_scores(count_concepts, img.conceptmodel_set)
+						
+						img_location = img.location.all()
+						img_categories = img.categories.all()
+						d_categoties = self.create_dict(img_categories, img, CategoryScoreModel.objects)
+						d_locations = self.create_dict(img_location, img)
+						#count_location = self.word_counter(img.locationmodel_set.all())
+						#count_categories = self.word_counter(img.categorymodel_set.all())
+						#categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
+
+						img_activity = img.activities.all()
+						img_attributes = img.attributes.all()
+						d_activities = self.create_dict(img_activity, img)
+						d_attributes = self.create_dict(img_attributes, img)
+
+						#count_activities = self.word_counter(img.activitymodel_set.all())
+						#count_attributes = self.word_counter(img.attributesmodel_set.all())
 
 
-						d = {**concepts_score, **categories_score, **count_activities, **count_attributes}
+						d = {**d_concepts, **d_categoties, **d_activities, **d_attributes}
 						neg_score = self.compute_score(negatives, d)
 
-						if neg_score < 0.7:
+						if neg_score < 0.6:
 
 							if objects:
-								d = {**concepts_score}
+								d = {**d_concepts}
 								scores.append(self.compute_score(objects, d))
 
 							if locations:
-								d = {**categories_score, **count_location}		
+								d = {**d_categoties, **d_locations}		
 								scores.append(self.compute_score(locations, d))
 							
 							if activities:
 								#print("activities: ", activities)
-								att_verbs, att_nouns = self.attributes_filter(count_attributes)
-								d = {**count_activities, **att_verbs}
+								#att_verbs, att_nouns = self.attributes_filter(count_attributes)
+								d = {**d_activities, **d_attributes}
 								scores.append(self.compute_score(activities, d))		
 
 					else:
@@ -115,22 +129,27 @@ class LMRTView(View):
 						if objects:
 							#print("Objects: ", objects)
 							img_concepts = img.concepts.all()
-							scores.append(self.concepts_compute_score(objects, img, img_concepts))
+							#img_categories = img.categories.all()
+							d = {**self.create_dict(img_concepts, img, ConceptScoreModel.objects)}#,
+							#**self.create_dict(img_categories, img, CategoryScoreModel.objects)}
+							scores.append(self.compute_score(objects, d))
 
 						if locations:
 							#print("locations: ", locations)
-							count_location = self.word_counter(img.locationmodel_set.all())
-							count_categories = self.word_counter(img.categorymodel_set.all())
-							categories_score = self.retrieve_scores(count_categories, img.categorymodel_set)
-							d = {**categories_score, **count_location}		
+							img_location = img.location.all()
+							img_categories = img.categories.all()
+							d = {**self.create_dict(img_location, img), 
+								**self.create_dict(img_categories, img, CategoryScoreModel.objects)}
+							
 							scores.append(self.compute_score(locations, d))
 						
 						if activities:
 							#print("activities: ", activities)
-							count_activities = self.word_counter(img.activitymodel_set.all())
-							count_attributes = self.word_counter(img.attributesmodel_set.all())
-							att_verbs, att_nouns = self.attributes_filter(count_attributes)
-							d = {**count_activities, **att_verbs}
+							img_activity = img.activities.all()
+							img_attributes = img.attributes.all()
+							#count_attributes = self.word_counter(img.attributesmodel_set.all())
+							#att_verbs, att_nouns = self.attributes_filter(count_attributes)
+							d = {**self.create_dict(img_activity, img), **self.create_dict(img_attributes, img)}
 							scores.append(self.compute_score(activities, d))
 
 					img_conf = 0
@@ -183,35 +202,45 @@ class LMRTView(View):
 		context = { 'topics': topicset }
 		return render(self.request, self.template_name, context)
 
-	def concepts_compute_score(self, objects, img, img_concepts):
+	def create_dict(self, img_concepts, img, obj=None):
 
-		final_objs_score = 0
-		for word in objects:
+		d = {}
+		for con in img_concepts:
+			if obj == None:
+				d[con.tag] = 1
+			else:
+
+				con_score = 0
+				for cs in obj.filter(image=img, tag=con):
+					if con_score < cs.score:
+						con_score = cs.score
+
+				d[con.tag] = con_score
+
+		return d
+
+	def location_compute_score(self, locations, img_location):
+
+		final_loc_score = 0
+		for word in locations:
 			w_lemma = word2lemma(word)
 			w_score = 0
-			for con in img_concepts:
-				max_score = 0
-				con_score = 0
-				for score in ConceptScoreModel.objects.filter(image=img, concept=con):
-					if max_score < score.score:
-						max_score = score.score
+			for loc in img_location:
+				
+				sim_score = similarity(w_lemma[0], loc.tag)
+				if sim_score > 0:
+					loc_score = sim_score
 
-				if max_score > 0:
-					sim_score = similarity(w_lemma[0], con.tag)
-					if sim_score > 0:
-						con_score = max_score*sim_score
-					#print(w_lemma[0], con.tag, sim_score, max_score, con_score)
-
-				if con_score > w_score:
-					w_score = con_score
+				if loc_score > w_score:
+					w_score = loc_score
 
 			if w_score > 0:
-				final_objs_score = final_objs_score + w_score 
+				final_loc_score = final_loc_score + w_score 
 		
-		if len(objects) > 0:
-			final_objs_score = final_objs_score / len(objects)
+		if len(locations) > 0:
+			final_loc_score = final_loc_score / len(locations)
 
-		return final_objs_score
+		return final_loc_score
 
 	def evaluation(self, img_list, topic_id):
 
