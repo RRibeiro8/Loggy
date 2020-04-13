@@ -33,7 +33,8 @@ def similarity(a, b):
 	word_a = nlp(a)
 	word_b = nlp(b)
 	score = word_a.similarity(word_b)
-	#print(a, b, score)
+	if score < 0:
+		return 0
 
 	return score
 

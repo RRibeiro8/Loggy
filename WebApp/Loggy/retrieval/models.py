@@ -13,6 +13,17 @@ class TopicModel(models.Model):
 	class Meta:
 		ordering = ['title',]
 
+class SimilarityModel(models.Model):
+	word1 = models.CharField(max_length = 255)
+	word2 = models.CharField(max_length = 255)
+	score = models.FloatField()
+
+	def __str__(self):
+		return (self.word1 + " - " + self.word2)
+
+	class Meta:
+		ordering = ['-score',]
+
 # class TopicObject(models.Model):
 # 	tag = models.CharField(max_length = 255, unique = True)
 

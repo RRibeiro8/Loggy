@@ -7,7 +7,7 @@ from fileupload.models import (ImageModel, LocationModel, ConceptModel, ConceptS
 								AttributesModel, AttributesInfoModel)
 from django.core import serializers
 
-from .models import TopicModel
+from .models import TopicModel, SimilarityModel
 
 from collections import Counter
 from .sentence_analyzer.nlp_analyzer import similarity, word2lemma
@@ -219,29 +219,6 @@ class LMRTView(View):
 
 		return d
 
-	def location_compute_score(self, locations, img_location):
-
-		final_loc_score = 0
-		for word in locations:
-			w_lemma = word2lemma(word)
-			w_score = 0
-			for loc in img_location:
-				
-				sim_score = similarity(w_lemma[0], loc.tag)
-				if sim_score > 0:
-					loc_score = sim_score
-
-				if loc_score > w_score:
-					w_score = loc_score
-
-			if w_score > 0:
-				final_loc_score = final_loc_score + w_score 
-		
-		if len(locations) > 0:
-			final_loc_score = final_loc_score / len(locations)
-
-		return final_loc_score
-
 	def evaluation(self, img_list, topic_id):
 
 		TP = 0
@@ -344,7 +321,16 @@ class LMRTView(View):
 				##if we wanto to filter more, we can treshold the similarity (sim_score and con_score)
 
 				if d[con] > 0:
-					sim_score = similarity(w_lemma[0], con)
+					f = Q(word1=w_lemma[0], word2=con) | Q(word1=con, word2=w_lemma[0])
+					sim_objs = SimilarityModel.objects.filter(f)
+					sim_score=0
+					if (sim_objs):
+						for so in sim_objs:
+							sim_score = so.score
+					else:
+						sim_score = similarity(w_lemma[0], con)
+						SimilarityModel.objects.create(word1=w_lemma[0], word2=con, score=sim_score)
+					
 					if sim_score <= 0:
 						sim_score = 0
 
