@@ -159,7 +159,7 @@ class LMRTView(View):
 					if (len(scores) > 0):
 						img_conf = img_conf / len(scores)
 					
-					if img_conf > 0:
+					if img_conf > 0.2:
 
 						url = img.file.url
 						name = img.file.name

@@ -132,7 +132,7 @@ class ImageListView(ListView):
 
     def render_to_response(self, context, **response_kwargs):
         files = [ serialize(p) for p in self.get_queryset() ]
-        data = {'files': files}
+        data = {'files': files[0:10]}
         response = JSONResponse(data, mimetype=response_mimetype(self.request))
         response['Content-Disposition'] = 'inline; filename=files.json'
         return response
