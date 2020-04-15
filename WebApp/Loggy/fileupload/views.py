@@ -87,7 +87,7 @@ class ImageCreateView(CreateView):
 
             activity = None
             if img_data['activity'] != "NULL":
-                activity = one_word2lemma(img_data['activity'])
+                activity = img_data['activity'] #one_word2lemma(img_data['activity'])
                 if (ActivityModel.objects.filter(tag=img_data['activity'])):
                     activity = ActivityModel.objects.get(tag=img_data['activity'])
                 else:
@@ -98,7 +98,7 @@ class ImageCreateView(CreateView):
 
             attribute = None
             for attr in img_data['atributtes']:
-                lemma_attr = one_word2lemma(attr)
+                lemma_attr = attr#one_word2lemma(attr)
                 if (AttributesModel.objects.filter(tag=lemma_attr)):
                     attribute = AttributesModel.objects.get(tag=lemma_attr)
                 else:

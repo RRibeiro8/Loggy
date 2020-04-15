@@ -8,10 +8,13 @@ nlp = spacy.load('en_core_web_md')
 def word2lemma(word):
 
 	doc = nlp(word)
-	lista = []
+	lista = None
 
 	for token in doc:
-		lista.append(token.lemma_)
+		if lista == None:
+			lista = token.lemma_
+		else:
+			lista = lista + " " + token.lemma_
 
 	return lista
 

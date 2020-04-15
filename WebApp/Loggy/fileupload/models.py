@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib import admin
+import os
+import datetime
 
 class ConceptModel(models.Model):
 
@@ -51,10 +53,12 @@ class AttributesModel(models.Model):
     class Meta:
         ordering = ['tag']
 
+def get_upload_path(instance, filename):
+    return os.path.join("database/%s" % instance.date_time.strftime('%Y-%m-%d'), filename)
 
 class ImageModel(models.Model):
 
-    file = models.ImageField(upload_to="database/")
+    file = models.ImageField(upload_to=get_upload_path)
     slug = models.SlugField(max_length=50, blank=True)
     minute_id = models.CharField(max_length=255, blank=True)
     date_time = models.DateTimeField(blank=True, null=True)
@@ -70,6 +74,8 @@ class ImageModel(models.Model):
     class Meta:
         ordering = ['date_time',]
 
+
+
     def get_absolute_url(self):
         return ('upload-new', )
 
@@ -78,7 +84,7 @@ class ImageModel(models.Model):
 
     def delete(self, *args, **kwargs):
         """delete -- Remove to leave file."""
-        self.file.delete(False)
+        self.file.delete()
         super(ImageModel, self).delete(*args, **kwargs)
 
 class ConceptScoreModel(models.Model):
