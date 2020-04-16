@@ -22,7 +22,7 @@ def best_clusters(img_clusters):
 	X = np.asarray(features).reshape(-1, 1)
 
 	#print(X)
-	db = DBSCAN(eps=0.00005, min_samples=2).fit(X)
+	db = DBSCAN(eps=0.00003, min_samples=2).fit(X)
 	labels = db.labels_
 
 	# Number of clusters in labels, ignoring noise if present.
@@ -51,44 +51,63 @@ def best_clusters(img_clusters):
 	#evaluation_list[img.slug] = img_conf
 	#print(X_train)
 
+def scores(word, d):
+
+	w_lemma = word2lemma(word)
+	w_score = 0
+	for con in d:
+		##if we wanto to filter more, we can treshold the similarity (sim_score and con_score)
+		if d[con] > 0:
+			con_lemma = word2lemma(con)
+			f = Q(word1=w_lemma, word2=con_lemma) | Q(word1=con_lemma, word2=w_lemma)
+			sim_objs = SimilarityModel.objects.filter(f)
+			sim_score=0
+			if (sim_objs):
+				for so in sim_objs:
+					sim_score = so.score
+			else:
+				sim_score = similarity(w_lemma, con_lemma)
+				SimilarityModel.objects.create(word1=w_lemma, word2=con_lemma, score=sim_score)
+			
+			if sim_score < 0.5:
+				con_score = 0
+			#elif sim_score >= 0.99 and d[con] >= 0.1:
+				#con_score = sim_score
+			else:
+				con_score = (0.3*d[con]+0.7*sim_score)
+			#print(w_lemma[0], con, con_score)
+
+			if con_score > w_score:
+				w_score = con_score
+
+	return w_score
+
 def compute_score(objects, d):
 	final_objs_score = 0
+	final_and_score = 0
+	counter_and = 0
 	for word in objects:
-		w_lemma = word2lemma(word)
-		w_score = 0
-		for con in d:
-			##if we wanto to filter more, we can treshold the similarity (sim_score and con_score)
-			if d[con] > 0.1:
-				con_lemma = word2lemma(con)
-				f = Q(word1=w_lemma, word2=con_lemma) | Q(word1=con_lemma, word2=w_lemma)
-				sim_objs = SimilarityModel.objects.filter(f)
-				sim_score=0
-				if (sim_objs):
-					for so in sim_objs:
-						sim_score = so.score
-				else:
-					sim_score = similarity(w_lemma, con_lemma)
-					SimilarityModel.objects.create(word1=w_lemma, word2=con_lemma, score=sim_score)
-				
-				if sim_score <= 0.5:
-					sim_score = 0
+		if word.startswith("&"):
+			word = word.replace("&", "")
+			
+			w_score = scores(word, d)
+			
+			final_and_score = final_and_score + w_score
+			counter_and = counter_and + 1;
 
-				if d[con] >= 1:
-					con_score = 1*sim_score
-				else:
-					con_score = d[con]*sim_score
-				#print(w_lemma[0], con, con_score)
+		else:
+			w_score = scores(word, d)
 
-				if con_score > w_score:
-					w_score = con_score
-
-		if w_score > final_objs_score:
-			final_objs_score = w_score
+			if w_score > final_objs_score:
+				final_objs_score = w_score
 	
-	#if len(objects) > 0:
-		#final_objs_score = final_objs_score / len(objects)
+	final_score = 0
+	if counter_and > 0:
+		final_score = ((final_and_score + final_objs_score) / (counter_and + 1))
+	else:
+		final_score = final_objs_score
 	
-	return final_objs_score
+	return final_score
 
 
 def create_dict(img_concepts, img, obj=None):

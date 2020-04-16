@@ -78,7 +78,7 @@ class LMRTView(View):
 					images_set = ImageModel.objects.all()
 
 				evaluation_list = {}
-
+				max_conf = 0
 				for img in tqdm(images_set):
 
 					scores = []
@@ -160,39 +160,51 @@ class LMRTView(View):
 					
 					if (len(scores) > 0):
 						img_conf = img_conf / len(scores)
+
+					if max_conf < img_conf:
+						max_conf = img_conf
 					
-					if img_conf > 0.2:
-
-						img_clusters.append((img, img_conf))
+					if img_conf > (max_conf*0.5) and img_conf >= 0.2:	
 						evaluation_list[img.slug] = { "image": img, "confidence": img_conf }
-
+						img_clusters.append((img, img_conf))
 					#toc = time.clock()
 					#print("Processing time: ", (toc - tic))
-
 				evaluation_data = {}
-				
-				clusters = best_clusters(img_clusters)
 
 				image_list = {}
+				noise_list = []
+				counter = 0
+				if img_clusters:
+				
+					clusters = best_clusters(img_clusters)
 
-				for c in clusters:
-					name = clusters[c]["image"].slug
-					url =  clusters[c]["image"].file.url
-					score = clusters[c]["confidence"]*100
-					image_list[name] = [{'url': url, 'conf': score}]
+					clusters = sorted(clusters.items(), key = lambda item: item[1]['confidence'], reverse=True)
+					#print(clusters)
+					for c in clusters:
+						if c[0] != -1 and c[1]["confidence"] >= (max_conf*0.6):
+							name = c[1]["image"].slug
+							url =  c[1]["image"].file.url
+							score = c[1]["confidence"]*100
+							image_list[name] = [{'url': url, 'conf': score}]
+							counter = counter + 1
+						else:
+							noise_list.append(c[1]["image"].slug)
 
 				#print(image_list)
 
 				if evaluation_list:
 					img_list_sorted = sorted(evaluation_list.items(), key = lambda item: item[1]['confidence'], reverse=True)
-
+					
 					for item in img_list_sorted:
 
-						if item[0] not in image_list:
+						if (item[0] not in image_list) and (item[0] not in noise_list):
 							name = item[1]["image"].slug
 							url =  item[1]["image"].file.url
 							score = item[1]["confidence"]*100
 							image_list[name] = [{'url': url, 'conf': score}]
+							counter = counter + 1
+							if counter > 50: 
+								break
 							#print(item[0], image_list[item[0]])
 
 					#print(img_list_sorted)
