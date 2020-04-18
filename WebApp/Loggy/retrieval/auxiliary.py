@@ -4,6 +4,10 @@ from django.db.models import Q
 
 from .models import SimilarityModel
 
+from fileupload.models import (ImageModel, LocationModel, ConceptModel, ConceptScoreModel, 
+								CategoryModel, CategoryScoreModel, ActivityInfoModel, ActivityModel, 
+								AttributesModel, AttributesInfoModel)
+
 from collections import Counter
 from .sentence_analyzer.nlp_analyzer import similarity, word2lemma
 import datetime
@@ -11,6 +15,83 @@ import numpy as np
 
 from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
+
+def retrieve_images(queryset, objects):
+
+	img_list = {}
+	for word in objects:
+		print(word)
+		images_set = ImageModel.objects.none()
+		w_lemma = word2lemma(word)	
+		tags = []
+		for con_obj in queryset:
+			con_lemma = word2lemma(con_obj.tag)
+
+			f = Q(word1=w_lemma, word2=con_lemma) | Q(word1=con_lemma, word2=w_lemma)
+			sim_objs = SimilarityModel.objects.filter(f)
+			sim_score=0
+			if (sim_objs):
+				for so in sim_objs:
+					sim_score = so.score
+			else:
+				sim_score = similarity(w_lemma, con_lemma)
+				SimilarityModel.objects.create(word1=w_lemma, word2=con_lemma, score=sim_score)
+
+			if sim_score >= 0.5:
+				#print(con_lemma, w_lemma, sim_score)
+				tags.append((con_obj, sim_score))
+
+				tag_filter = Q(concepts__tag__contains=con_obj) | Q(location__tag__contains=con_obj) | Q(categories__tag__contains=con_obj) | Q(activities__tag__contains=con_obj) | Q(attributes__tag__contains=con_obj)
+				#print(con_obj)
+				images_set = (images_set | ImageModel.objects.filter(tag_filter).distinct()).distinct()
+
+		for img in images_set:
+
+			img_conf = 0
+			for t in tags:
+				w_score = 0
+				con_score = 0
+				t_filter = Q(slug=img.slug) & (Q(concepts__tag__contains=t[0]) | Q(location__tag__contains=t[0]) | Q(categories__tag__contains=t[0]) | Q(activities__tag__contains=t[0]) | Q(attributes__tag__contains=t[0]))
+				if ImageModel.objects.filter(t_filter):
+					if isinstance(t[0], ConceptModel):
+						for cs in ConceptScoreModel.objects.filter(image=img, tag=t[0]):
+							if con_score < cs.score:
+								con_score = cs.score
+
+						if con_score > 0:
+							w_score = (0.3*con_score+0.7*t[1])
+
+					if isinstance(t[0], CategoryModel):
+						for cs in CategoryScoreModel.objects.filter(image=img, tag=t[0]):
+							if con_score < cs.score:
+								con_score = cs.score
+						
+						if con_score > 0:
+							w_score = (0.3*con_score+0.7*t[1])
+
+					if isinstance(t[0], LocationModel) or isinstance(t[0], ActivityModel) or isinstance(t[0], AttributesModel):
+						w_score = (0.3+0.7*t[1])
+
+					if w_score > img_conf:
+						img_conf = w_score
+
+					if img.slug == "b00001288_21i6bq_20150306_183420e.jpg":
+						if word == "bar":
+							print(img.slug, img_conf, word)
+
+			if img.slug not in img_list:
+				#print("Adicionou Nova Imagem...")
+				#print(img.slug, img_conf)
+				img_list[img.slug] = img_conf
+			else:
+				if img_list[img.slug] < img_conf:
+					#print("Update Imagem")
+					#print(img.slug, img_conf)
+					img_list[img.slug] = img_conf
+				#else:
+					#print("NADA")
+
+	return img_list
 
 def best_clusters(img_clusters):
 
@@ -22,7 +103,7 @@ def best_clusters(img_clusters):
 	X = np.asarray(features).reshape(-1, 1)
 
 	#print(X)
-	db = DBSCAN(eps=0.00003, min_samples=2).fit(X)
+	db = DBSCAN(eps=0.00002, min_samples=2).fit(X)
 	labels = db.labels_
 
 	# Number of clusters in labels, ignoring noise if present.
@@ -31,27 +112,22 @@ def best_clusters(img_clusters):
 
 	#print(n_clusters_, n_noise_)
 	cluster_n = None
-	best_item = None
+
 	d = {}
 	for item, cl in zip(img_clusters, labels):
 		#print(item, cl)
-		if cluster_n != cl:
-			cluster_n = cl
-			d[cluster_n] = { "image": item[0], "confidence": item[1]}
-		
-		if item[1] > d[cluster_n]["confidence"]:
-			d[cluster_n] = { "image": item[0], "confidence": item[1]}
+		if cl not in d:
+			d[cl] = { "image": item[0], "confidence": item[1]}
+		else:
+			if d[cl]["confidence"] < item[1]:
+				d[cl]["confidence"] = item[1]
+				d[cl]["image"] = item[0]
 
+	#print(d)
 	return d
 
-	#url = img.file.url
-	#name = img.file.name
 
-	#image_list[name] = [ {'url': url, 'conf': score} ]
-	#evaluation_list[img.slug] = img_conf
-	#print(X_train)
-
-def scores(word, d):
+def scores(word, d, img):
 
 	w_lemma = word2lemma(word)
 	w_score = 0
@@ -74,15 +150,21 @@ def scores(word, d):
 			#elif sim_score >= 0.99 and d[con] >= 0.1:
 				#con_score = sim_score
 			else:
+				#print(con)
 				con_score = (0.3*d[con]+0.7*sim_score)
+				
 			#print(w_lemma[0], con, con_score)
 
 			if con_score > w_score:
 				w_score = con_score
 
+			if img.slug == "b00001288_21i6bq_20150306_183420e.jpg":
+				if word == "bar":
+					print(img.slug, w_score ,word)
+
 	return w_score
 
-def compute_score(objects, d):
+def compute_score(objects, d, img):
 	final_objs_score = 0
 	final_and_score = 0
 	counter_and = 0
@@ -90,14 +172,14 @@ def compute_score(objects, d):
 		if word.startswith("&"):
 			word = word.replace("&", "")
 			
-			w_score = scores(word, d)
+			w_score = scores(word, d, img)
 			
 			final_and_score = final_and_score + w_score
 			counter_and = counter_and + 1;
 
 		else:
-			w_score = scores(word, d)
-
+			w_score = scores(word, d, img)
+			
 			if w_score > final_objs_score:
 				final_objs_score = w_score
 	

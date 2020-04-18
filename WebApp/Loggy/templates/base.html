@@ -152,15 +152,32 @@
             </a>
 
             <ul class="nav nav-treeview">
-              <li class="nav-item">
+              <li class="nav-item has-treeview">
+                <a href="" class="nav-link">
+                  <i class="fas fa-user-edit"></i>
+                  <p>Manual
+                  <i class="right fas fa-angle-left"></i>
+                  </p>
+                </a>
+
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
                 <a href="{% url 'lmrt-manual' %}" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Manual</p>
+                  <i class="fas fa-search"></i>
+                  <p>Exhaustive Search</p>
                 </a>
               </li>
               <li class="nav-item">
+                <a href="{% url 'lmrt-manual-connected' %}" class="nav-link">
+                  <i class="fab fa-connectdevelop"></i>
+                  <p>Connections</p>
+                </a>
+              </li>
+                </ul>
+              </li>
+              <li class="nav-item">
                 <a href="{% url 'lmrt-auto' %}" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
+                  <i class="fas fa-laptop-code"></i>
                   <p>Automatic</p>
                 </a>
               </li>
@@ -246,7 +263,7 @@
   <footer class="main-footer">
     <strong>Copyright &copy; 2019-2020 <a href="">Loggy</a></strong>
     <div class="float-right d-none d-sm-inline-block">
-      <b>Version</b> 0.3.0
+      <b>Version</b> 0.5.0
     </div>
   </footer>
 </div>
