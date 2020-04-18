@@ -16,15 +16,17 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
 
+from tqdm import tqdm
+
 def retrieve_images(queryset, objects):
 
 	img_list = {}
-	for word in objects:
-		print(word)
+	for word in tqdm(objects):
+		#print(word)
 		images_set = ImageModel.objects.none()
 		w_lemma = word2lemma(word)	
 		tags = []
-		for con_obj in queryset:
+		for con_obj in tqdm(queryset):
 			con_lemma = word2lemma(con_obj.tag)
 
 			f = Q(word1=w_lemma, word2=con_lemma) | Q(word1=con_lemma, word2=w_lemma)
@@ -45,7 +47,7 @@ def retrieve_images(queryset, objects):
 				#print(con_obj)
 				images_set = (images_set | ImageModel.objects.filter(tag_filter).distinct()).distinct()
 
-		for img in images_set:
+		for img in tqdm(images_set):
 
 			img_conf = 0
 			for t in tags:
@@ -74,11 +76,6 @@ def retrieve_images(queryset, objects):
 
 					if w_score > img_conf:
 						img_conf = w_score
-
-					if img.slug == "b00001288_21i6bq_20150306_183420e.jpg":
-						if word == "bar":
-							print(img.slug, img_conf, word)
-
 			if img.slug not in img_list:
 				#print("Adicionou Nova Imagem...")
 				#print(img.slug, img_conf)
@@ -127,7 +124,7 @@ def best_clusters(img_clusters):
 	return d
 
 
-def scores(word, d, img):
+def scores(word, d):
 
 	w_lemma = word2lemma(word)
 	w_score = 0
@@ -158,13 +155,9 @@ def scores(word, d, img):
 			if con_score > w_score:
 				w_score = con_score
 
-			if img.slug == "b00001288_21i6bq_20150306_183420e.jpg":
-				if word == "bar":
-					print(img.slug, w_score ,word)
-
 	return w_score
 
-def compute_score(objects, d, img):
+def compute_score(objects, d):
 	final_objs_score = 0
 	final_and_score = 0
 	counter_and = 0
@@ -172,13 +165,13 @@ def compute_score(objects, d, img):
 		if word.startswith("&"):
 			word = word.replace("&", "")
 			
-			w_score = scores(word, d, img)
+			w_score = scores(word, d)
 			
 			final_and_score = final_and_score + w_score
 			counter_and = counter_and + 1;
 
 		else:
-			w_score = scores(word, d, img)
+			w_score = scores(word, d)
 			
 			if w_score > final_objs_score:
 				final_objs_score = w_score

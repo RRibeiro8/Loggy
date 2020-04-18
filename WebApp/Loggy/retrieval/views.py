@@ -100,7 +100,6 @@ class LMRTConnectionsView(View):
 				if locations:
 					queryset = list(query_categories) + list(query_locations)
 					imgs_loc =  retrieve_images(queryset, locations)
-					#print(imgs_loc)
 
 				imgs_act = {}
 				if activities:
@@ -135,7 +134,7 @@ class LMRTConnectionsView(View):
 							except:
 								s.append(0)
 
-						if locations:
+						if activities:
 							try:
 								s.append(imgs_act[img_name])
 							except:
@@ -306,23 +305,23 @@ class LMRTView(View):
 
 
 						d = {**d_concepts, **d_categoties, **d_activities, **d_attributes}
-						neg_score = compute_score(negatives, d, img)
+						neg_score = compute_score(negatives, d)
 
 						if neg_score < 0.6:
 
 							if objects:
 								d = {**d_concepts}
-								scores.append(compute_score(objects, d, img))
+								scores.append(compute_score(objects, d))
 
 							if locations:
 								d = {**d_categoties, **d_locations}		
-								scores.append(compute_score(locations, d, img))
+								scores.append(compute_score(locations, d))
 							
 							if activities:
 								#print("activities: ", activities)
 								#att_verbs, att_nouns = self.attributes_filter(count_attributes)
 								d = {**d_activities, **d_attributes}
-								scores.append(compute_score(activities, d, img))		
+								scores.append(compute_score(activities, d))		
 
 					else:
 
@@ -332,7 +331,7 @@ class LMRTView(View):
 							#img_categories = img.categories.all()
 							d = {**create_dict(img_concepts, img, ConceptScoreModel.objects)}#,
 							#**self.create_dict(img_categories, img, CategoryScoreModel.objects)}
-							scores.append(compute_score(objects, d, img))
+							scores.append(compute_score(objects, d))
 
 						if locations:
 							#print("locations: ", locations)
@@ -341,7 +340,7 @@ class LMRTView(View):
 							d = {**create_dict(img_location, img), 
 								**create_dict(img_categories, img, CategoryScoreModel.objects)}
 							
-							scores.append(compute_score(locations, d, img))
+							scores.append(compute_score(locations, d))
 						
 						if activities:
 							#print("activities: ", activities)
@@ -350,7 +349,7 @@ class LMRTView(View):
 							#count_attributes = self.word_counter(img.attributesmodel_set.all())
 							#att_verbs, att_nouns = self.attributes_filter(count_attributes)
 							d = {**create_dict(img_activity, img), **create_dict(img_attributes, img)}
-							scores.append(compute_score(activities, d, img))
+							scores.append(compute_score(activities, d))
 
 					img_conf = 0
 					for s in scores:
