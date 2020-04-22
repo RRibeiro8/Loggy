@@ -12,7 +12,7 @@ from django.conf import settings
 from datetime import datetime
 import pytz
 
-from retrieval.sentence_analyzer.nlp_analyzer import one_word2lemma
+from retrieval.sentence_analyzer.nlp_analyzer import word2lemma
 
 class ImageCreateView(CreateView):
     model = ImageModel
@@ -24,14 +24,19 @@ class ImageCreateView(CreateView):
         images_info = json.load(f)
 
     def form_valid(self, form):
-        image = form.save(commit=False)
-        image_data = self.request.FILES['file'].read()
-        image_path = self.request.FILES['file']
+        
+        #image_data = self.request.FILES['file'].read()
+        #image_path = self.request.FILES['file']
+        #print(image_data)
 
-        image.slug = image.file.name
+        files = []
 
         try:
+            image = form.save(commit=False)
             img_data = self.images_info[image.file.name]
+
+            image.slug = image.file.name
+
             image.minute_id = img_data['minute_id']
 
             utc_time = img_data['utc_time']
@@ -45,10 +50,11 @@ class ImageCreateView(CreateView):
                 for p in img_data['concepts'][con]['box']:
                     p_string = p_string + str(p) + " " 
 
-                if (ConceptModel.objects.filter(tag=con)):
-                    obj = ConceptModel.objects.get(tag=con)
+                con_obj = word2lemma(con)
+                if (ConceptModel.objects.filter(tag=con_obj)):
+                    obj = ConceptModel.objects.get(tag=con_obj)
                 else: 
-                    obj = ConceptModel(tag=con)
+                    obj = ConceptModel(tag=con_obj)
                     obj.save()
 
                 ConceptScoreModel.objects.create(image=image, tag=obj, score=img_data['concepts'][con]['score'], box=p_string)
@@ -63,10 +69,11 @@ class ImageCreateView(CreateView):
                     location = LocationModel(tag='Unknown')
                     location.save()
             else:
-                if (LocationModel.objects.filter(tag=img_data['location'])):
-                    location = LocationModel.objects.get(tag=img_data['location'])   
+                loc_obj = word2lemma(img_data['location'])
+                if (LocationModel.objects.filter(tag=loc_obj)):
+                    location = LocationModel.objects.get(tag=loc_obj)   
                 else:
-                    location = LocationModel(tag=img_data['location'])
+                    location = LocationModel(tag=loc_obj)
                     location.save()
 
 
@@ -77,10 +84,11 @@ class ImageCreateView(CreateView):
                 tmp = cat.split('/')
                 cat_filtered = tmp[0].replace('_', ' ')
 
-                if (CategoryModel.objects.filter(tag=cat_filtered)):
-                    category = CategoryModel.objects.get(tag=cat_filtered)
+                cat_obj = word2lemma(cat_filtered)
+                if (CategoryModel.objects.filter(tag=cat_obj)):
+                    category = CategoryModel.objects.get(tag=cat_obj)
                 else:
-                    category = CategoryModel(tag=cat_filtered)
+                    category = CategoryModel(tag=cat_obj)
                     category.save()
                 
                 CategoryScoreModel.objects.create(image=image, tag=category, score=img_data['categories'][cat])
@@ -88,17 +96,19 @@ class ImageCreateView(CreateView):
             activity = None
             if img_data['activity'] != "NULL":
                 activity = img_data['activity'] #one_word2lemma(img_data['activity'])
-                if (ActivityModel.objects.filter(tag=img_data['activity'])):
-                    activity = ActivityModel.objects.get(tag=img_data['activity'])
+                act_obj = word2lemma(activity)
+                if (ActivityModel.objects.filter(tag=act_obj)):
+                    activity = ActivityModel.objects.get(tag=act_obj)
                 else:
-                    activity = ActivityModel(tag=img_data['activity'])
+                    activity = ActivityModel(tag=act_obj)
                     activity.save()
 
             ActivityInfoModel.objects.create(image=image, tag=activity)
 
             attribute = None
             for attr in img_data['atributtes']:
-                lemma_attr = attr#one_word2lemma(attr)
+                lemma_attr = word2lemma(attr)#one_word2lemma(attr)
+
                 if (AttributesModel.objects.filter(tag=lemma_attr)):
                     attribute = AttributesModel.objects.get(tag=lemma_attr)
                 else:
@@ -107,10 +117,12 @@ class ImageCreateView(CreateView):
 
             AttributesInfoModel.objects.create(image=image, tag=attribute)
 
+            files = [serialize(image)]
         except:
-            form.save()
+            print("Image - NO DATA! - Error")
+            #form.save()
             
-        files = [serialize(image)]
+        #files = [serialize(image)]
         data = {'files': files}
         response = JSONResponse(data, mimetype=response_mimetype(self.request))
         response['Content-Disposition'] = 'inline; filename=files.json'
