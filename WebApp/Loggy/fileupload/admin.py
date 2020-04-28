@@ -5,13 +5,13 @@ from fileupload.models import (ImageModel, LocationModel,ConceptModel,ConceptSco
 from django.contrib import admin
 
 admin.site.register(ImageModel, ImageModelAdmin)
-admin.site.register(LocationModel, LocationModelAdmin)
+admin.site.register(LocationModel)#, LocationModelAdmin)
 #admin.site.register(LocationInfoModel)
-admin.site.register(ConceptModel, ConceptModelAdmin)
+admin.site.register(ConceptModel)#, ConceptModelAdmin)
 #admin.site.register(ConceptScoreModel)
-admin.site.register(CategoryModel, CategoryModelAdmin)
+admin.site.register(CategoryModel)#, CategoryModelAdmin)
 #admin.site.register(CategoryScoreModel)
-admin.site.register(ActivityModel, ActivityModelAdmin)
+admin.site.register(ActivityModel)#, ActivityModelAdmin)
 #admin.site.register(ActivityInfoModel)
-admin.site.register(AttributesModel, AttributesModelAdmin)
+admin.site.register(AttributesModel)#, AttributesModelAdmin)
 #admin.site.register(AttributesInfoModel)

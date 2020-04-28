@@ -22,12 +22,12 @@ def retrieve_images(queryset, objects):
 
 	img_list = {}
 	for word in tqdm(objects):
-		#print(word)
+		print("Word: ", word)
 		images_set = ImageModel.objects.none()
 		w_lemma = word2lemma(word)	
 		tags = []
 		for con_obj in tqdm(queryset):
-			con_lemma = word2lemma(con_obj.tag)
+			con_lemma = con_obj.tag#word2lemma(con_obj.tag)
 
 			f = Q(word1=w_lemma, word2=con_lemma) | Q(word1=con_lemma, word2=w_lemma)
 			sim_objs = SimilarityModel.objects.filter(f)
@@ -39,16 +39,16 @@ def retrieve_images(queryset, objects):
 				sim_score = similarity(w_lemma, con_lemma)
 				SimilarityModel.objects.create(word1=w_lemma, word2=con_lemma, score=sim_score)
 
-			if sim_score >= 0.5:
+			if sim_score >= 0.6:
 				#print(con_lemma, w_lemma, sim_score)
 				tags.append((con_obj, sim_score))
 
 				tag_filter = Q(concepts__tag__contains=con_obj) | Q(location__tag__contains=con_obj) | Q(categories__tag__contains=con_obj) | Q(activities__tag__contains=con_obj) | Q(attributes__tag__contains=con_obj)
 				#print(con_obj)
 				images_set = (images_set | ImageModel.objects.filter(tag_filter).distinct()).distinct()
-
+		print("Searching N. Images: ", len(images_set))
 		for img in tqdm(images_set):
-
+			
 			img_conf = 0
 			for t in tags:
 				w_score = 0
@@ -61,7 +61,7 @@ def retrieve_images(queryset, objects):
 								con_score = cs.score
 
 						if con_score > 0:
-							w_score = (0.3*con_score+0.7*t[1])
+							w_score = (0.5*con_score+0.5*t[1])
 
 					if isinstance(t[0], CategoryModel):
 						for cs in CategoryScoreModel.objects.filter(image=img, tag=t[0]):
@@ -72,7 +72,7 @@ def retrieve_images(queryset, objects):
 							w_score = (0.3*con_score+0.7*t[1])
 
 					if isinstance(t[0], LocationModel) or isinstance(t[0], ActivityModel) or isinstance(t[0], AttributesModel):
-						w_score = (0.3+0.7*t[1])
+						w_score = (t[1])
 
 					if w_score > img_conf:
 						img_conf = w_score
@@ -131,7 +131,7 @@ def scores(word, d):
 	for con in d:
 		##if we wanto to filter more, we can treshold the similarity (sim_score and con_score)
 		if d[con] > 0:
-			con_lemma = word2lemma(con)
+			con_lemma = con#word2lemma(con)
 			f = Q(word1=w_lemma, word2=con_lemma) | Q(word1=con_lemma, word2=w_lemma)
 			sim_objs = SimilarityModel.objects.filter(f)
 			sim_score=0
@@ -142,7 +142,7 @@ def scores(word, d):
 				sim_score = similarity(w_lemma, con_lemma)
 				SimilarityModel.objects.create(word1=w_lemma, word2=con_lemma, score=sim_score)
 			
-			if sim_score < 0.5:
+			if sim_score < 0.65:
 				con_score = 0
 			#elif sim_score >= 0.99 and d[con] >= 0.1:
 				#con_score = sim_score

@@ -69,7 +69,7 @@ class ImageCreateView(CreateView):
                     location = LocationModel(tag='Unknown')
                     location.save()
             else:
-                loc_obj = word2lemma(img_data['location'])
+                loc_obj = img_data['location']
                 if (LocationModel.objects.filter(tag=loc_obj)):
                     location = LocationModel.objects.get(tag=loc_obj)   
                 else:

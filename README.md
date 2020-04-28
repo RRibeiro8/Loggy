@@ -158,4 +158,18 @@ This folder contains a program, "main.py" that organize the metadata and visual 
   organization={International Society for Optics and Photonics}
 }
 ```
+## ImageRecognition
+
+### COCO
+
+> https://github.com/facebookresearch/detectron2
+
+> https://github.com/facebookresearch/detectron2/blob/master/MODEL_ZOO.md
+
+ - faster_rcnn_X_101_32x8d_FPN_3x.yaml
+ - model_final_68b088.pkl
+
+
+### ImageNet
+
 

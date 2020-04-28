@@ -59,3 +59,6 @@ WebApp/Loggy/media/database/*
 !WebApp/Loggy/media/database/.keep
 
 !WebApp/Loggy/static/dist
+
+ImageRecognition/COCO/detectron2/*
+ImageRecognition/COCO/weights/model_final_68b088.pkl
