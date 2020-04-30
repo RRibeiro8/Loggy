@@ -55,11 +55,11 @@ if __name__== "__main__":
 
 	DATASET_PATH = "../../Dataset/images/"
 
-	processed_dates = ["2015-02-25", "2015-02-26", "2015-02-27", "2015-03-01", "2015-03-05", "2015-03-10", 
-	"2015-03-17", "2015-03-19", "2016-08-11", "2016-08-12", "2016-08-13", "2016-08-17", "2016-08-19", "2016-08-28", 
-	"2016-09-02", "2016-09-04", "2016-09-07", "2016-09-08", "2016-09-13", "2016-09-15", "2016-09-16", "2016-09-17", "2016-09-19",
-	"2016-09-20", "2016-09-24", "2016-09-28", "2016-09-29", "2016-09-30", "2016-10-04", "2018-05-03", "2018-05-05",
-	"2018-05-07", "2018-05-14", "2018-05-24", "2018-05-25", "2018-05-28", "2018-05-31"]
+	# processed_dates = ["2015-02-25", "2015-02-26", "2015-02-27", "2015-03-01", "2015-03-05", "2015-03-10", 
+	# "2015-03-17", "2015-03-19", "2016-08-11", "2016-08-12", "2016-08-13", "2016-08-17", "2016-08-19", "2016-08-28", 
+	# "2016-09-02", "2016-09-04", "2016-09-07", "2016-09-08", "2016-09-13", "2016-09-15", "2016-09-16", "2016-09-17", "2016-09-19",
+	# "2016-09-20", "2016-09-24", "2016-09-28", "2016-09-29", "2016-09-30", "2016-10-04", "2018-05-03", "2018-05-05",
+	# "2018-05-07", "2018-05-14", "2018-05-24", "2018-05-25", "2018-05-28", "2018-05-31"]
 	
 	for date_dir in tqdm(os.scandir(DATASET_PATH)):
 
@@ -68,27 +68,27 @@ if __name__== "__main__":
 		if date_dir.is_dir():
 			print(date_dir.name)
 			
-			if date_dir.name not in processed_dates:
-				images_path = os.path.join(date_dir.path)
+			#if date_dir.name not in processed_dates:
+			images_path = os.path.join(date_dir.path)
 
-				for file in tqdm(os.scandir(images_path)):
-					if not file.name.startswith(".") and file.is_file():
-						#img_fullpath = 
-						#print(file.path)
-						try:
-							im = cv2.imread(file.path)
-							concepts = predict(im, predictor, metadata)
+			for file in tqdm(os.scandir(images_path)):
+				if not file.name.startswith(".") and file.is_file():
+					#img_fullpath = 
+					#print(file.path)
+					try:
+						im = cv2.imread(file.path)
+						concepts = predict(im, predictor, metadata)
 
-							images_dict[file.name] = {"concepts": concepts}
-						except:
-							print("Image error: ", file.name)
+						images_dict[file.name] = {"concepts": concepts}
+					except:
+						print("Image error: ", file.name)
 
-				json_path = "./concepts_data/" + date_dir.name + "_concepts.json"
+			json_path = "./concepts_data/" + date_dir.name + "_concepts.json"
 
-				sorted_data = {k: v for k, v in sorted(images_dict.items(), key=lambda item: item[0])}
+			sorted_data = {k: v for k, v in sorted(images_dict.items(), key=lambda item: item[0])}
 
-				with open(json_path, 'w') as jsonfile:
-					json.dump(sorted_data, jsonfile, indent=4)
+			with open(json_path, 'w') as jsonfile:
+				json.dump(sorted_data, jsonfile, indent=4)
 
 
 

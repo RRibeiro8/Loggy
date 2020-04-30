@@ -3,11 +3,24 @@ import torch
 from torchvision import transforms
 from PIL import Image
 from torch.autograd import Variable as V
+import os
+from tqdm import tqdm
+import json
 
 
 def load_model():
 
-	model = torch.hub.load('facebookresearch/WSL-Images', 'resnext101_32x16d_wsl')
+	model = torch.hub.load('facebookresearch/WSL-Images', 'resnext101_32x48d_wsl')
+
+	path = 'ResNeXt_101_32x48d.pth'
+
+	pretrained_dict=torch.load(path)['model']
+
+	model_dict = model.state_dict()
+	for k in model_dict.keys():
+		if(('module.'+k) in pretrained_dict.keys()):
+			model_dict[k]=pretrained_dict.get(('module.'+k))
+	model.load_state_dict(model_dict)
 
 	model.eval()
 
@@ -16,6 +29,7 @@ def load_model():
 def predict(file, model):
 
 	img = Image.open(file)
+	preditions = {}
 
 	transform = transforms.Compose([ 
 		transforms.Resize(256),
@@ -54,14 +68,50 @@ def predict(file, model):
 
 	counter = 0
 	for i in idx[:5]:
-		print(key_to_classname[class_id_to_key[i]], probs[counter])
+		if probs[counter] >= 20:
+			preditions[key_to_classname[class_id_to_key[i]]] = probs[counter]
 		counter+= 1
+
+	return preditions
 
 if __name__== "__main__":
 
 	model = load_model()
 
-	predict("../dataset/5.jpg", model)
+	DATASET_PATH = "../../Dataset/images/"
+
+	#cat = predict("test2.jpg", model)
+	#print(cat)
+
+	for date_dir in tqdm(os.scandir(DATASET_PATH)):
+
+		images_dict = {}
+
+		if date_dir.is_dir():
+			print("#################")
+			print(date_dir.name)
+			
+			#if date_dir.name not in processed_dates:
+			images_path = os.path.join(date_dir.path)
+
+			for file in tqdm(os.scandir(images_path)):
+				if not file.name.startswith(".") and file.is_file():
+					#img_fullpath = 
+					#print(file.path)
+					try:
+						classification = predict(file.path, model)
+
+						images_dict[file.name] = classification
+					except:
+						print("Image error: ", file.name)
+
+			json_path = "./classification_data/" + date_dir.name + "_classification.json"
+
+			sorted_data = {k: v for k, v in sorted(images_dict.items(), key=lambda item: item[0])}
+
+			with open(json_path, 'w') as jsonfile:
+				json.dump(sorted_data, jsonfile, indent=4)
+
 
 
 # resnext50 = models.resnet50(pretrained=True)

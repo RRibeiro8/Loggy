@@ -62,3 +62,14 @@ WebApp/Loggy/media/database/*
 
 ImageRecognition/COCO/detectron2/*
 ImageRecognition/COCO/weights/model_final_68b088.pkl
+ImageRecognition/COCO/concepts_data/*
+!ImageRecognition/COCO/concepts_data/.keep
+
+ImageRecognition/ImageNet/classification_data/*
+!ImageRecognition/ImageNet/classification_data/.keep
+ImageRecognition/ImageNet/ResNeXt_101_32x48d.pth
+
+ImageRecognition/places365/places365/*
+ImageRecognition/places365/places365_data/*
+!ImageRecognition/places365/places365_data/.keep
+

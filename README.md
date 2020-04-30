@@ -173,3 +173,16 @@ This folder contains a program, "main.py" that organize the metadata and visual 
 ### ImageNet
 
 
+> https://github.com/facebookresearch/FixRes
+
+ - resnext101_32x48d
+
+
+### Places365
+
+> https://github.com/CSAILVision/places365
+
+ - resnet18
+
+
+
