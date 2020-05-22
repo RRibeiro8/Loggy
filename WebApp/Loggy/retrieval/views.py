@@ -24,6 +24,441 @@ import collections
 import itertools 
 import datetime
 
+class LMRT_TestView(View):
+
+	template_name = "retrieval/lmrt_test.html"
+
+	def computeSimilarity(self, item, query_word):
+
+		sim_objs = SimilarityModel.objects.filter(Q(word1=item, word2=query_word.tag) | Q(word1=query_word.tag, word2=item))
+		sim_score=0
+
+		if (sim_objs):
+			for so in sim_objs:
+				sim_score = so.score
+		else:
+			sim_score = similarity(item, query_word.tag)
+			SimilarityModel.objects.create(word1=item, word2=query_word.tag, score=sim_score)
+
+		return sim_score
+
+	def convert2lemma(self, words):
+		lemmas = []
+		for item in words:
+			lemmas.append(word2lemma(item))
+		return lemmas
+
+	def getWordFilter(self, imgsRetrieval, words, query_word, datefilter, search_mode):
+
+		for item in words:
+
+			sim_score = self.computeSimilarity(item, query_word)
+
+			if sim_score >= 0.5:
+				#print(item, query_word.tag, sim_score)
+				if isinstance(query_word, ConceptModel) and (search_mode in ["objects"]):
+					tmpFilter = datefilter & Q(concepts__tag__contains=query_word.tag)
+					tmp = ImageModel.objects.filter(tmpFilter)
+					#print("Number: ",tmp.count())
+					for img in tmp:
+
+						tmpScores = ConceptScoreModel.objects.filter(image=img, tag=query_word)
+						if tmpScores:
+							if img.slug not in imgsRetrieval:
+								imgsRetrieval[img.slug] = {}
+							if search_mode not in imgsRetrieval[img.slug]:
+								imgsRetrieval[img.slug][search_mode] = {}
+							if item not in imgsRetrieval[img.slug][search_mode]:
+								imgsRetrieval[img.slug][search_mode][item] = {}
+							if query_word.tag not in imgsRetrieval[img.slug][search_mode][item]:
+								imgsRetrieval[img.slug][search_mode][item][query_word.tag] = 0
+							for sc in tmpScores:
+								labelScore = sc.score*0.5 + sim_score*0.5		
+								if labelScore > imgsRetrieval[img.slug][search_mode][item][query_word.tag]:
+									imgsRetrieval[img.slug][search_mode][item][query_word.tag] = labelScore
+
+				if isinstance(query_word, CategoryModel) and (search_mode in ["locations", "objects"]):
+					tmpFilter = datefilter & Q(categories__tag__contains=query_word.tag)
+					tmp = ImageModel.objects.filter(tmpFilter)
+					#print("Number: ",tmp.count())
+					for img in tmp:
+
+						tmpScores = CategoryScoreModel.objects.filter(image=img, tag=query_word)
+						if tmpScores:
+							if img.slug not in imgsRetrieval:
+								imgsRetrieval[img.slug] = {}
+							if search_mode not in imgsRetrieval[img.slug]:
+								imgsRetrieval[img.slug][search_mode] = {}
+							if item not in imgsRetrieval[img.slug][search_mode]:
+								imgsRetrieval[img.slug][search_mode][item] = {}
+							if query_word.tag not in imgsRetrieval[img.slug][search_mode][item]:
+								imgsRetrieval[img.slug][search_mode][item][query_word.tag] = 0
+							for sc in tmpScores:
+								labelScore = sc.score*0.3 + sim_score*0.7							
+								if labelScore > imgsRetrieval[img.slug][search_mode][item][query_word.tag]:
+									imgsRetrieval[img.slug][search_mode][item][query_word.tag] = labelScore
+
+				if isinstance(query_word, ActivityModel) and (search_mode in ["activities"]):
+					tmpFilter = datefilter & Q(activities__tag__contains=query_word.tag)
+					tmp = ImageModel.objects.filter(tmpFilter)
+					#print("Number: ",tmp.count())
+					for img in tmp:
+						if img.slug not in imgsRetrieval:
+							imgsRetrieval[img.slug] = {}
+						if search_mode not in imgsRetrieval[img.slug]:
+							imgsRetrieval[img.slug][search_mode] = {}
+						if item not in imgsRetrieval[img.slug][search_mode]:
+							imgsRetrieval[img.slug][search_mode][item] = {}
+						if query_word.tag not in imgsRetrieval[img.slug][search_mode][item]:
+							imgsRetrieval[img.slug][search_mode][item][query_word.tag] = 0
+						
+						if sim_score > imgsRetrieval[img.slug][search_mode][item][query_word.tag]:
+							imgsRetrieval[img.slug][search_mode][item][query_word.tag] = sim_score
+
+
+				if isinstance(query_word, LocationModel) and (search_mode in ["locations"]):
+					tmpFilter = datefilter & Q(location__tag__contains=query_word.tag)
+					tmp = ImageModel.objects.filter(tmpFilter)
+					#print("Number: ",tmp.count())
+					for img in tmp:
+						if img.slug not in imgsRetrieval:
+							imgsRetrieval[img.slug] = {}
+						if search_mode not in imgsRetrieval[img.slug]:
+							imgsRetrieval[img.slug][search_mode] = {}
+						if item not in imgsRetrieval[img.slug][search_mode]:
+							imgsRetrieval[img.slug][search_mode][item] = {}
+						if query_word.tag not in imgsRetrieval[img.slug][search_mode][item]:
+							imgsRetrieval[img.slug][search_mode][item][query_word.tag] = 0
+						
+						if sim_score > imgsRetrieval[img.slug][search_mode][item][query_word.tag]:
+							imgsRetrieval[img.slug][search_mode][item][query_word.tag] = sim_score
+
+				if isinstance(query_word, AttributesModel) and (search_mode in ["locations", "activities", "objects"]):
+					tmpFilter = datefilter & Q(attributes__tag__contains=query_word.tag)
+					tmp = ImageModel.objects.filter(tmpFilter)
+					#print("Number: ",tmp.count())
+					for img in tmp:
+						if img.slug not in imgsRetrieval:
+							imgsRetrieval[img.slug] = {}
+						if search_mode not in imgsRetrieval[img.slug]:
+							imgsRetrieval[img.slug][search_mode] = {}
+						if item not in imgsRetrieval[img.slug][search_mode]:
+							imgsRetrieval[img.slug][search_mode][item] = {}
+						if query_word.tag not in imgsRetrieval[img.slug][search_mode][item]:
+							imgsRetrieval[img.slug][search_mode][item][query_word.tag] = 0
+						
+						if sim_score > imgsRetrieval[img.slug][search_mode][item][query_word.tag]:
+							imgsRetrieval[img.slug][search_mode][item][query_word.tag] = sim_score
+
+
+	def isNegative(self, words, query_word):
+
+		for item in words:
+
+			sim_score = self.computeSimilarity(item, query_word)
+			if sim_score >= 0.7:
+				return True
+
+		return False
+
+	def computeImageScore(self, data, search_labels):
+
+		#print(data)
+		#imgsRetrieval[img.slug][search_mode][item][query_word.tag] = sim_score
+		imgScore = 0
+		for s in search_labels:
+			#print(s)
+			if s in data:
+				for k in data[s]:
+					#print(data[s][k])
+					tmpScore = 0
+					for j in data[s][k]:
+						if tmpScore < data[s][k][j]:
+							tmpScore = data[s][k][j]
+				
+					#print(tmpScore)	
+					imgScore = imgScore + tmpScore
+
+		imgScore = imgScore / len(search_labels)
+
+		return imgScore
+				
+	def post(self, request, *args, **kwargs):
+
+		imgsRetrieval = {}
+		search_labels = []
+
+		if request.is_ajax():
+			image_list = {}
+
+			objects = self.convert2lemma(request.POST.getlist('obj_tags[]'))
+			if objects:
+				search_labels.append("objects")
+			#print(objects)
+			activities = self.convert2lemma(request.POST.getlist('act_tags[]'))
+			if activities:
+				search_labels.append("activities")
+			#print(activities)
+			locations = self.convert2lemma(request.POST.getlist('loc_tags[]'))
+			if locations:
+				search_labels.append("locations")
+			#print(locations)
+			negatives = self.convert2lemma(request.POST.getlist('neg_tags[]'))
+			#print(negatives)
+			daterange = request.POST.getlist('daterange')
+			#print(daterange)
+			years = request.POST.getlist('years[]')
+			#print(years)
+			daysweek = request.POST.getlist('daysweek[]')
+			#print(daysweek)
+
+			dateFilter = Q()
+
+			#Filtering images based on dates
+			if( daterange or years or daysweek ):
+				date_filter = Q()
+				if daterange:
+					dates = daterange[0].split(' - ')
+					start_date = datetime.datetime.strptime(dates[0], '%d/%m/%Y').strftime('%Y-%m-%d')
+					end_date =  datetime.datetime.strptime(dates[1], '%d/%m/%Y')
+					new_end = end_date + datetime.timedelta(days=1)
+
+					date_filter = date_filter & Q(date_time__range=[start_date, new_end.strftime('%Y-%m-%d')])
+				
+				if years:
+					year_filter = Q()
+					for y in years:
+						year_filter = year_filter | Q(date_time__year=y)
+
+					date_filter = date_filter & year_filter
+
+				if daysweek:
+					day_filter = Q()
+					for day in daysweek:
+						day_filter = day_filter | Q(date_time__week_day=int(day))
+
+					date_filter = date_filter & day_filter
+
+				dateFilter = date_filter
+			#print(final_filter)
+
+			#Filtering images based on labels and annotations
+			query_concepts = ConceptModel.objects.all()
+			#print(query_concepts)
+			query_categories = CategoryModel.objects.all()
+			#print(query_categories)
+			query_activities = ActivityModel.objects.all()
+			#print(query_activities)
+			query_attributes = AttributesModel.objects.all()
+			#print(query_attributes)
+			query_locations = LocationModel.objects.all()
+			#print(query_locations)
+
+			all_queries = list(query_concepts) + list(query_categories) + list(query_activities) + list(query_attributes) + list(query_locations)
+			#print(all_queries)
+
+			for item in tqdm(all_queries):
+
+				#Negative (Irrelevant) words are obtained to create a filter
+				#nFilter = nFilter | self.getWordFilter(imgRetrieval, negatives, item, dateFilter)
+				if not self.isNegative(negatives, item):
+					#Filtering objects
+					self.getWordFilter(imgsRetrieval, objects, item, dateFilter, "objects")
+					#Filtering activities
+					self.getWordFilter(imgsRetrieval, activities, item, dateFilter, "activities")
+					#Filtering locations
+					self.getWordFilter(imgsRetrieval, locations, item, dateFilter, "locations")
+
+			
+			print(len(imgsRetrieval))
+			for img in tqdm(imgsRetrieval):
+
+				url = ImageModel.objects.filter(slug=img)[0].file.url
+				
+				score = self.computeImageScore(imgsRetrieval[img], search_labels)
+				if score > 0.5:
+					print(img, score) 
+					image_list[img] = [{'url': url, 'conf': score}]
+
+				#Filtering locations
+				#locFilter = locFilter | self.getWordFilter(imgRetrieval, locations, item, dateFilter, "locations")
+
+			print(len(image_list))
+			#final_filter = final_filter & objFilter & actFilter & locFilter & ~nFilter
+			#print(final_filter)
+
+			#final_set = ImageModel.objects.filter(final_filter).distinct()
+			#print(final_set.count())
+
+			#for img in final_set:
+				#name = img.slug
+				#url =  img.file.url
+				#score = 100
+				#image_list[name] = [{'url': url, 'conf': score}]
+
+			return JsonResponse({"success": True, "queryset": image_list}, status=200)
+		else:
+			return JsonResponse({"success": False}, status=400)
+
+
+	def get(self, request, *args, **kwargs):
+
+		context = {}
+		return render(self.request, self.template_name, context)
+
+
+class LMRT_TestView_v1(View):
+
+	template_name = "retrieval/lmrt_test_v1.html"
+
+	def convert2lemma(self, words):
+		lemmas = []
+		for item in words:
+			lemmas.append(word2lemma(item))
+		return lemmas
+
+	def getWordFilter(self, words, query_word, search_mode=None):
+
+		f = Q()
+		for item in words:
+
+			sim_objs = SimilarityModel.objects.filter(Q(word1=item, word2=query_word.tag) | Q(word1=query_word.tag, word2=item))
+			sim_score=0
+
+			if (sim_objs):
+				for so in sim_objs:
+					sim_score = so.score
+			else:
+				sim_score = similarity(item, query_word.tag)
+				SimilarityModel.objects.create(word1=item, word2=query_word.tag, score=sim_score)
+
+			if sim_score >= 0.65:
+				#print(item, query_word.tag, sim_score)
+				if isinstance(query_word, ConceptModel) and (search_mode in ["objects", None]):
+					f = f | Q(concepts__tag__contains=query_word.tag)
+				if isinstance(query_word, CategoryModel) and (search_mode in ["locations", "objects", None]):
+					f = f | Q(categories__tag__contains=query_word.tag)
+				if isinstance(query_word, ActivityModel) and (search_mode in ["activities", None]):
+					f = f | Q(activities__tag__contains=query_word.tag)
+				if isinstance(query_word, LocationModel) and (search_mode in ["locations", None]):
+					f = f | Q(location__tag__contains=query_word.tag)
+				if isinstance(query_word, AttributesModel) and (search_mode in ["locations", "activities", "objects", None]):
+					f = f | Q(attributes__tag__contains=query_word.tag)
+
+		return f
+
+				
+	def post(self, request, *args, **kwargs):
+
+		if request.is_ajax():
+			image_list = {}
+
+			objects = self.convert2lemma(request.POST.getlist('obj_tags[]'))
+			#print(objects)
+			activities = self.convert2lemma(request.POST.getlist('act_tags[]'))
+			#print(activities)
+			locations = self.convert2lemma(request.POST.getlist('loc_tags[]'))
+			#print(locations)
+			negatives = self.convert2lemma(request.POST.getlist('neg_tags[]'))
+			#print(negatives)
+			daterange = request.POST.getlist('daterange')
+			#print(daterange)
+			years = request.POST.getlist('years[]')
+			#print(years)
+			daysweek = request.POST.getlist('daysweek[]')
+			#print(daysweek)
+
+			final_filter = Q()
+
+			#Filtering images based on dates
+			if( daterange or years or daysweek ):
+				date_filter = Q()
+				if daterange:
+					dates = daterange[0].split(' - ')
+					start_date = datetime.datetime.strptime(dates[0], '%d/%m/%Y').strftime('%Y-%m-%d')
+					end_date =  datetime.datetime.strptime(dates[1], '%d/%m/%Y')
+					new_end = end_date + datetime.timedelta(days=1)
+
+					print(start_date, new_end)
+
+					date_filter = date_filter & Q(date_time__range=[start_date, new_end.strftime('%Y-%m-%d')])
+				
+				if years:
+					year_filter = Q()
+					for y in years:
+						year_filter = year_filter | Q(date_time__year=y)
+
+					date_filter = date_filter & year_filter
+
+				if daysweek:
+					day_filter = Q()
+					for day in daysweek:
+						day_filter = day_filter | Q(date_time__week_day=int(day))
+
+					date_filter = date_filter & day_filter
+
+				final_filter = date_filter
+			#print(final_filter)
+
+			#Filtering images based on labels and annotations
+
+			query_concepts = ConceptModel.objects.all()
+			#print(query_concepts)
+			query_categories = CategoryModel.objects.all()
+			#print(query_categories)
+			query_activities = ActivityModel.objects.all()
+			#print(query_activities)
+			query_attributes = AttributesModel.objects.all()
+			#print(query_attributes)
+			query_locations = LocationModel.objects.all()
+			#print(query_locations)
+
+			all_queries = list(query_concepts) + list(query_categories) + list(query_activities) + list(query_attributes) + list(query_locations)
+			#print(all_queries)
+
+			nFilter = Q()
+			objFilter = Q()
+			actFilter = Q()
+			locFilter = Q()
+
+			for item in tqdm(all_queries):
+
+				#Negative (Irrelevant) words are obtained to create a filter
+				nFilter = nFilter | self.getWordFilter(negatives, item)
+
+				#Filtering objects
+				objFilter = objFilter | self.getWordFilter(objects, item, "objects")
+
+				#Filtering activities
+				actFilter = actFilter | self.getWordFilter(activities, item, "activities")
+
+				#Filtering locations
+				locFilter = locFilter | self.getWordFilter(locations, item, "locations")
+
+
+			final_filter = final_filter & objFilter & actFilter & locFilter & ~nFilter
+			print(final_filter)
+
+			final_set = ImageModel.objects.filter(final_filter).distinct()
+			print(final_set.count())
+
+			for img in final_set:
+				name = img.slug
+				url =  img.file.url
+				score = 100
+				image_list[name] = [{'url': url, 'conf': score}]
+
+			return JsonResponse({"success": True, "queryset": image_list}, status=200)
+		else:
+			return JsonResponse({"success": False}, status=400)
+
+
+	def get(self, request, *args, **kwargs):
+
+		context = {}
+		return render(self.request, self.template_name, context)
+
+
 class LMRTConnectionsView(View):
 
 	template_name = "retrieval/lmrt.html"
@@ -65,7 +500,7 @@ class LMRTConnectionsView(View):
 				if daterange:
 					dates = daterange[0].split(' - ')
 					start_date = datetime.datetime.strptime(dates[0], '%d/%m/%Y').strftime('%Y-%m-%d')
-					end_date =  datetime.datetime.strptime(dates[0], '%d/%m/%Y')
+					end_date =  datetime.datetime.strptime(dates[1], '%d/%m/%Y')
 					new_end = end_date + datetime.timedelta(days=1)
 
 					date_filter = date_filter & Q(date_time__range=[start_date, new_end.strftime('%Y-%m-%d')])
@@ -364,8 +799,8 @@ class LMRTConnectionsView(View):
 				act_set = ImageModel.objects.filter(a_filter).distinct()
 				print(act_set.count())
 
-
-			final_filter = obj_filter & c_filter & a_filter & ~neg_filter
+			
+			final_filter = final_filter & obj_filter & c_filter & a_filter & ~neg_filter
 			#print(final_filter)
 			final_set = ImageModel.objects.filter(final_filter).distinct()
 			print(final_set.count())

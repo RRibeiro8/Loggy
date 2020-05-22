@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block styles %}
+
+<link rel="stylesheet" href="{% static 'gallery/css/blueimp-gallery.min.css' %}" />
+
+<link rel="stylesheet" href="{% static 'gallery/css/gallery.css' %}" />
+
+<link rel="stylesheet" type="text/css" href="{% static 'retrieval/DataTables/datatables.min.css' %}"/>
+
+<link rel="stylesheet" href="{% static 'retrieval/css/table.css' %}" />
+
+<link rel="stylesheet" href="{% static 'retrieval/css/retrieval.css' %}" />
+
+<link href="{% static 'retrieval/select2/css/select2.min.css' %}" rel="stylesheet" />
+
+<!-- daterange picker -->
+<link rel="stylesheet" href="{% static 'retrieval/daterangepicker/daterangepicker.css' %}">
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">Lifelog Moment Retrieval Task Test</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Loggy</a></li>
+              <li class="breadcrumb-item active">LMRT Test</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Main row -->
+        <form method="POST" id="submit-tags"> {% csrf_token %}
+        <div class="row">
+          <div class="col">
+
+            <div class="card card-info">
+              <div class="card-header">
+                <div class="card-title"><h3><i class="fa fa-search mr-1"></i> Image Retrieval</h3></div>
+              </div>
+              <div class="card-body">
+                <div id="showtopic">
+                 
+                </div>
+                <div class="row">
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Objects:</label>
+                      <input type="form-control" name="object-tag" id="object-tag" placeholder="object" style="vertical-align: bottom">
+                      <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_object"><i class="fas fa-plus"></i></button>
+                    </div>
+                    
+                    <div id="objects">
+
+                    </div>
+
+                  </div>
+
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Activities:</label>
+                      <input type="form-control" name="act-tag" id="act-tag" placeholder="activity" style="vertical-align: bottom">
+                      <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_act"><i class="fas fa-plus"></i></button>
+                    </div>
+                    
+                    <div id="act">
+
+                    </div>
+
+                  </div>
+
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Locations:</label>
+                      <input type="form-control" name="loc-tag" id="loc-tag" placeholder="location" style="vertical-align: bottom">
+                      <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_loc"><i class="fas fa-plus"></i></button>
+                    </div>
+                    
+                    <div id="loc">
+
+                    </div>
+
+                  </div>
+
+                  <div class="col-2">
+                    <div class="form-group">
+                      <label>Irrelevant:</label>
+                      <input type="form-control" name="neg-tag" id="neg-tag" placeholder="negative" style="vertical-align: bottom">
+                      <button type="button" class="btn btn-success btn-circle btn-circle-sm" id="add_neg"><i class="fas fa-plus"></i></button>
+                    </div>
+                    
+                    <div id="neg">
+
+                    </div>
+
+                  </div>
+
+                    <div class="col">
+                      <div class="form-group">
+                      <label>Date range:</label>
+
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">
+                            <i class="far fa-calendar-alt"></i>
+                          </span>
+                        </div>
+                        <input type="text" class="form-control float-right" id="reservation">
+                      </div>
+                      <!-- /.input group -->
+                    </div>
+                    <!-- /.form group -->
+
+                    <div class="form-group">
+                      <label>Years:</label>
+
+                      <select class="select2" id="select2year" multiple="multiple" data-placeholder="Select the Years" style="width: 100%;">
+                      <option>2020</option>
+                      <option>2019</option>
+                      <option>2018</option>
+                      <option>2017</option>
+                      <option>2016</option>
+                      <option>2015</option>     
+                   </select>
+                  
+                    </div>
+                    <!-- /.form group -->
+
+                    <div class="form-group">
+                      <label>Day of Week:</label>
+
+                      <select class="select2" id="select2weekday" multiple="multiple" data-placeholder="Select Days of the Week" style="width: 100%;">
+                      <option value="2">Monday</option>
+                      <option value="3">Tuesday</option>
+                      <option value="4">Wednesday</option>
+                      <option value="5">Thursday</option>
+                      <option value="6">Friday</option>
+                      <option value="7">Saturday</option>  
+                      <option value="1">Sunday</option>    
+                   </select>
+                      <!-- /.input group -->
+                    </div>
+                    <!-- /.form group -->
+                  </div>
+                </div>
+
+               
+              </div>
+              
+              </div>
+            </div>
+          </div>
+        
+        <!-- /.row -->
+        <div class="row">
+          <div class="card-body">
+            
+              <button type="reset" class="btn btn-block bg-gradient-primary btn-lg" id="reset-button">Refresh</button>
+              <button type="submit" class="btn btn-block bg-gradient-success btn-lg">Submit</button>
+           
+          </div>
+        </div>
+         </form>
+
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-th mr-1"></i>
+                  Results
+                </h3>
+                <div class="card-tools">
+                  <ul class="nav nav-pills ml-auto">
+                    <li class="nav-item">
+                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Images</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#sales-chart" data-toggle="tab">List</a>
+                    </li>
+                  </ul>
+                </div>
+              </div><!-- /.card-header -->
+              <div class="card-body">
+
+                  <div class="col text-center" id='loader' style='display: none;'>
+                    <img src="{% static 'dist/img/ajax-loader.gif' %}" width='120px' height='120px'>
+                  </div>
+                  
+                 <div class="tab-content p-0">
+                  <div class="tab-pane active" id="revenue-chart"
+                       style="position: relative;">
+                      <div id='links' class='links'></div>                     
+                   </div>
+                  <div class="chart tab-pane" id="sales-chart" style="position: relative;">
+                    <div id="showimagelist"></div>                    
+                  </div>  
+               
+              </div><!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+            </div>
+        </div>
+      </div><!--/. container-fluid -->
+    </section>
+    <!-- /.content -->
+
+    <!-- The Gallery as lightbox dialog, should be a document body child element -->
+  <div id="blueimp-gallery" class="blueimp-gallery">
+    <div class="slides"></div>
+    <h3 class="title"></h3>
+    <a class="prev">‹</a>
+    <a class="next">›</a>
+    <a class="close">×</a>
+    <ol class="indicator"></ol>
+  </div>
+	
+
+{% endblock %}
+
+{% block javascripts %}
+
+<script type="text/javascript" src="{% static 'retrieval/DataTables/datatables.min.js' %}"></script>
+
+<script src="{% static 'retrieval/select2/js/select2.full.min.js' %}"></script>
+
+<script src="{% static 'retrieval/daterangepicker/moment.min.js' %}"></script>
+
+<script src="{% static 'retrieval/daterangepicker/daterangepicker.js' %}"></script>
+
+<script type="text/javascript">
+
+
+  //Date range picker
+  $('#reservation').daterangepicker({
+        autoUpdateInput: false,
+        locale: {
+          cancelLabel: 'Clear',
+          format: 'DD/MM/YYYY'
+      }
+  });
+  $('#reservation').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+  });
+
+  $('#reservation').on('cancel.daterangepicker', function(ev, picker) {
+      $(this).val('');
+  });
+
+  $('#select2year').select2();
+
+  $('#select2weekday').select2();
+
+  var obj_tags = [];
+
+  $('#add_object').click(function(){
+
+    obj = $('#object-tag').val();
+
+    if(obj && !obj_tags.includes(obj))
+    {
+      obj_tags.push(obj);
+
+      var t = "";
+      for (var i=0; i<obj_tags.length; i++)
+      {
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
+        + "<input type='text' readonly class='form-control-plaintext' value='" + obj_tags[i] + "' style='vertical-align: bottom'></div>"
+        + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_obj' ><i class='fas fa-minus'></i></button></div>";
+      }
+      
+      $('#objects').html(t);
+
+      $('#object-tag').val("");
+    }else{
+      $('#object-tag').val("");
+    }
+    
+  });
+
+
+  $(document).on('click','.btn_remove_obj',function() {
+    obj = $(this).parent('div').find('input').val();
+
+    obj_tags = obj_tags.filter(item => item !== obj);
+
+    $(this).parent('div').remove();
+    });
+  
+
+  var loc_tags = [];
+
+  $('#add_loc').click(function(){
+
+    obj = $('#loc-tag').val();
+
+    if(obj && !loc_tags.includes(obj))
+    {
+      loc_tags.push(obj);
+
+      var t = "";
+      for (var i=0; i<loc_tags.length; i++)
+      {
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
+        + "<input type='text' readonly class='form-control-plaintext' value='" + loc_tags[i] + "' style='vertical-align: bottom'></div>"
+        + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_loc' ><i class='fas fa-minus'></i></button></div>";
+      }
+      
+      $('#loc').html(t);
+
+      $('#loc-tag').val("");
+    }else{
+      $('#loc-tag').val("");
+    }
+    
+  });
+
+
+  $(document).on('click','.btn_remove_loc',function() {
+    obj = $(this).parent('div').find('input').val();
+
+    loc_tags = loc_tags.filter(item => item !== obj);
+
+    $(this).parent('div').remove();
+    });
+
+  var act_tags = [];
+
+  $('#add_act').click(function(){
+
+    obj = $('#act-tag').val();
+
+    if(obj && !act_tags.includes(obj))
+    {
+      act_tags.push(obj);
+
+      var t = "";
+      for (var i=0; i<act_tags.length; i++)
+      {
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
+        + "<input type='text' readonly class='form-control-plaintext' value='" + act_tags[i] + "' style='vertical-align: bottom'></div>"
+        + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_act' ><i class='fas fa-minus'></i></button></div>";
+      }
+      
+      $('#act').html(t);
+
+      $('#act-tag').val("");
+    }else{
+      $('#act-tag').val("");
+    }
+    
+  });
+
+  $(document).on('click','.btn_remove_act',function() {
+    obj = $(this).parent('div').find('input').val();
+
+    act_tags = act_tags.filter(item => item !== obj);
+
+    $(this).parent('div').remove();
+    });
+
+
+  var neg_tags = [];
+
+  $('#add_neg').click(function(){
+
+    obj = $('#neg-tag').val();
+
+    if(obj && !neg_tags.includes(obj))
+    {
+      neg_tags.push(obj);
+
+      var t = "";
+      for (var i=0; i<neg_tags.length; i++)
+      {
+        t += "<div class='row' style='margin-left: 5%;'> <div class='form-group'>" 
+        + "<input type='text' readonly class='form-control-plaintext' value='" + neg_tags[i] + "' style='vertical-align: bottom'></div>"
+        + "<button type='button' class='btn btn-danger btn-circle btn-circle-sm btn_remove_neg' ><i class='fas fa-minus'></i></button></div>";
+      }
+      
+      $('#neg').html(t);
+
+      $('#neg-tag').val("");
+    }else{
+      $('#neg-tag').val("");
+    }
+    
+  });
+
+
+  $(document).on('click','.btn_remove_neg',function() {
+    obj = $(this).parent('div').find('input').val();
+
+    neg_tags = neg_tags.filter(item => item !== obj);
+
+    $(this).parent('div').remove();
+    });
+
+  $("#reset-button").click(function(){
+     $('#objects').html("");
+     $('#loc').html("");
+     $('#act').html("");
+     $('#neg').html("");
+     obj_tags = [];
+     loc_tags = [];
+     act_tags = [];
+     neg_tags = [];
+     $('#links').html("");
+     $('#showimagelist').html("");
+     $('#evaluationlist').html("");
+     $('#showtopic').html("");
+      $('#reservation').val('');
+      $('#select2year').val('').trigger('change');
+      $('#select2weekday').val('').trigger('change');
+      });
+
+  $("#submit-tags").submit(function(e){
+     e.preventDefault();
+
+    if($("#reservation").val())
+    {
+      var daterange = $("#reservation").val();
+    }
+    if($("#select2year").val().length > 0)
+    {
+      var years = $("#select2year").val();
+    }
+    if($("#select2weekday").val().length > 0)
+    {
+      var daysweek = $("#select2weekday").val();
+    }
+
+     $.ajax({
+              type: 'POST',
+              url: ".",
+              data: {obj_tags, loc_tags, act_tags, neg_tags, daterange, years, daysweek, csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+              beforeSend: function(){$("#loader").show();},
+              success: function (data) {
+                //alert("Success");
+
+                if(!jQuery.isEmptyObject(data['queryset']))
+                {
+                  images = data['queryset'];
+
+                  var gallery_html = "";
+
+                  for(var key in images)
+                  {
+                   
+                    gallery_html += "<a href='" + images[key][0]['url']+ "' title='" + key + "'>";
+                    gallery_html += "<img src='" + images[key][0]['url'] + "' alt='" + key + "' id='imgGallery'/> </a>";
+                    //console.log(images[key])
+                  }
+
+                  $('#links').html(gallery_html);
+
+                  var list_html = "<table id='dtBasicExample' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                  + "<th class='th-sm'>Images</th>" 
+                  + "<th class='th-sm'>URL</th>" 
+                  + "<th class='th-sm'>Confidence</th>" 
+                  + "</tr></thead><tbody>";
+
+                  for(var key in images)
+                  {
+                    list_html += "<tr><td><a href='" + images[key][0]['url'] + "' title='" + key + "'>"
+                                  + "<img style='max-width:80px; max-height:80px;' src='" + images[key][0]['url'] + "'></a></td>"
+                                  + "<td><a href='" + images[key][0]['url'] + "' title='" + key + "' >" + key + "</a></td>"
+                                  +  "<td><span class='size'>" + images[key][0]['conf'] + "%</span></td></tr>" ;          
+                  }
+
+                  list_html += "</tbody></table> ";
+                    
+                  $('#showimagelist').html(list_html);
+
+                  $('#dtBasicExample').DataTable();
+                  //$('.dataTables_length').addClass('bs-select');
+                }
+                else
+                {
+                  $("#loader").hide();
+                }
+                
+                
+
+              },
+              complete:function(data){$("#loader").hide();},
+            });
+       
+   });
+
+</script>
+
+<script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
+
+
+
+  <script>
+      document.getElementById('links').onclick = function(event) {
+        event = event || window.event
+        var target = event.target || event.srcElement,
+          link = target.src ? target.parentNode : target,
+          options = { index: link, event: event },
+          links = this.getElementsByTagName('a')
+        blueimp.Gallery(links, options)
+      }
+  </script>
+
+{% endblock %}
