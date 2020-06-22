@@ -1,0 +1,5 @@
+We develop a web application in order to visualize and analyze the images that are retrieved by our system.
+The retrieval method used is now more efficient and it follows a new approach.
+From each topic are extracted manually the relevants words and divided into objects, activities and locations. The date and time are also considered.
+The confidence of the retrieved images are computed using the cosine similarity and the score of the concept provided by the organizers.
+The retrieved images was visualized and analyzed in order to exclude irrelevant images.

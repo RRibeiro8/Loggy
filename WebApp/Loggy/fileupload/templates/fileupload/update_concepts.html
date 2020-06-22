@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block styles %}
+
+
+{% endblock %}
+
+{% block content %}
+
+
+<!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">Update Concepts</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Loggy</a></li>
+              <li class="breadcrumb-item active">Update Concepts</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Main row -->
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fas fa-th mr-1"></i>
+                  Concepts List
+                </div>
+                <div class="card-tools">
+                  <form action="." method="post">
+                    {% csrf_token %}
+                  <button type="submit" class="btn btn-primary" name="button" value="update">Update</button>
+                  <button type="submit" class="btn btn-danger" name="button" value="delete">Delete</button>
+                </form>
+                </div>
+              </div><!-- /.card-header -->
+
+
+              <div class="card-body">
+
+                  <div class="row">
+                  {% for concept in concepts %}
+
+                    <div class="col-sm-3">
+                      {{ concept }}
+                    </div>
+                  
+                  {% endfor %}
+                  </div>
+               
+              </div><!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+            </div>
+        </div>
+
+          
+        	
+        </div>
+        <!-- /.row -->
+      </div><!--/. container-fluid -->
+    </section>
+    <!-- /.content -->
+
+
+{% endblock %}
+
+{% block javascripts %}
+{% endblock %}

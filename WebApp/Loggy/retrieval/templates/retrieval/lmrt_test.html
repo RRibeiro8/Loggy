@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'gallery/css/gallery.css' %}" />
 
 <link rel="stylesheet" type="text/css" href="{% static 'retrieval/DataTables/datatables.min.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'retrieval/DataTables/Buttons-1.6.2/css/buttons.dataTables.min.css' %}"/>
 
 <link rel="stylesheet" href="{% static 'retrieval/css/table.css' %}" />
 
@@ -196,6 +197,9 @@
                     <li class="nav-item">
                       <a class="nav-link" href="#sales-chart" data-toggle="tab">List</a>
                     </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#sales-chart2" data-toggle="tab">All</a>
+                    </li>
                   </ul>
                 </div>
               </div><!-- /.card-header -->
@@ -208,10 +212,14 @@
                  <div class="tab-content p-0">
                   <div class="tab-pane active" id="revenue-chart"
                        style="position: relative;">
-                      <div id='links' class='links'></div>                     
+                       <div class='timeline' id="imgtimeline"></div>
+                                           
                    </div>
                   <div class="chart tab-pane" id="sales-chart" style="position: relative;">
-                    <div id="showimagelist"></div>                    
+                    <div class='timeline' id="showimagelist"></div>                    
+                  </div>  
+                  <div class="chart tab-pane" id="sales-chart2" style="position: relative;">
+                    <div id="showimagelistall"></div>                    
                   </div>  
                
               </div><!-- /.card-body -->
@@ -232,13 +240,17 @@
     <a class="close">×</a>
     <ol class="indicator"></ol>
   </div>
-	
 
 {% endblock %}
 
 {% block javascripts %}
 
 <script type="text/javascript" src="{% static 'retrieval/DataTables/datatables.min.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'retrieval/DataTables/Buttons-1.6.2/js/dataTables.buttons.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'retrieval/DataTables/Buttons-1.6.2/js/buttons.flash.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'retrieval/DataTables/JSZip-2.5.0/jszip.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'retrieval/DataTables/Buttons-1.6.2/js/buttons.html5.min.js' %}"></script>
 
 <script src="{% static 'retrieval/select2/js/select2.full.min.js' %}"></script>
 
@@ -247,7 +259,6 @@
 <script src="{% static 'retrieval/daterangepicker/daterangepicker.js' %}"></script>
 
 <script type="text/javascript">
-
 
   //Date range picker
   $('#reservation').daterangepicker({
@@ -423,8 +434,9 @@
      loc_tags = [];
      act_tags = [];
      neg_tags = [];
-     $('#links').html("");
+     $('#imgtimeline').html("");
      $('#showimagelist').html("");
+     $('#showimagelistall').html("");
      $('#evaluationlist').html("");
      $('#showtopic').html("");
       $('#reservation').val('');
@@ -462,36 +474,82 @@
 
                   var gallery_html = "";
 
-                  for(var key in images)
-                  {
-                   
-                    gallery_html += "<a href='" + images[key][0]['url']+ "' title='" + key + "'>";
-                    gallery_html += "<img src='" + images[key][0]['url'] + "' alt='" + key + "' id='imgGallery'/> </a>";
-                    //console.log(images[key])
-                  }
+                  var list_html = "";
 
-                  $('#links').html(gallery_html);
-
-                  var list_html = "<table id='dtBasicExample' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
-                  + "<th class='th-sm'>Images</th>" 
-                  + "<th class='th-sm'>URL</th>" 
-                  + "<th class='th-sm'>Confidence</th>" 
-                  + "</tr></thead><tbody>";
+                  var listall_html = "<table id='dtall' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                    + "<th class='th-sm'>Images</th>" 
+                    + "<th class='th-sm'>URL</th>" 
+                    + "<th class='th-sm'>Confidence</th>" 
+                    + "</tr></thead><tbody>";
 
                   for(var key in images)
                   {
-                    list_html += "<tr><td><a href='" + images[key][0]['url'] + "' title='" + key + "'>"
-                                  + "<img style='max-width:80px; max-height:80px;' src='" + images[key][0]['url'] + "'></a></td>"
-                                  + "<td><a href='" + images[key][0]['url'] + "' title='" + key + "' >" + key + "</a></td>"
-                                  +  "<td><span class='size'>" + images[key][0]['conf'] + "%</span></td></tr>" ;          
+                    gallery_html += "<div class='time-label'><span class='bg-yellow'> Cluster "+ key +"</span></div>";
+
+                    gallery_html += " <div><i class='fa fa-camera bg-blue'></i><div class='timeline-item'><div class='timeline-body'><div id='links' class='links'>";
+
+                    list_html += "<div class='time-label'><span class='bg-yellow'> Cluster "+ key +"</span></div><div><div class='timeline-item'><div class='timeline-body'>";
+
+                    list_html += "<table id='dt"+ key +"' class='table table-striped table-bordered table-sm' cellspacing='0' width='100%''><thead><tr>" 
+                    + "<th class='th-sm'>Images</th>" 
+                    + "<th class='th-sm'>URL</th>" 
+                    + "<th class='th-sm'>Confidence</th>" 
+                    + "</tr></thead><tbody>";
+
+                    for(var img in images[key])
+                    {
+                      gallery_html += "<a href='" + images[key][img]['url']+ "' title='" + images[key][img]['name'] + "'>";
+                      gallery_html += "<img src='" + images[key][img]['url'] + "' alt='" + images[key][img]['name'] + "' id='imgGallery'/> </a>";
+
+                      list_html += "<tr><td><a href='" + images[key][img]['url'] + "' title='" + images[key][img]['name'] + "'>"
+                                  + "<img style='max-width:80px; max-height:80px;' src='" + images[key][img]['url'] + "'></a></td>"
+                                  + "<td><a href='" + images[key][img]['url'] + "' title='" + images[key][img]['name'] + "' >" + images[key][img]['name'] + "</a></td>"
+                                  +  "<td><span class='size'>" + images[key][img]['conf'] + "</span></td></tr>" ;
+
+                      listall_html += "<tr><td><a href='" + images[key][img]['url'] + "' title='" + images[key][img]['name'] + "'>"
+                                  + "<img style='max-width:80px; max-height:80px;' src='" + images[key][img]['url'] + "'></a></td>"
+                                  + "<td><a href='" + images[key][img]['url'] + "' title='" + images[key][img]['name'] + "' >" + images[key][img]['name'] + "</a></td>"
+                                  +  "<td><span class='size'>" + images[key][img]['conf'] + "</span></td></tr>" ;
+                    }
+
+                    gallery_html += "</div></div></div></div>";
+
+                    list_html += "</tbody></table></div></div></div>";
+
                   }
 
-                  list_html += "</tbody></table> ";
-                    
+                  gallery_html += "<div><i class='fas fa-clock bg-gray'></i></div>";
+
+                  list_html += "<div><i class='fas fa-clock bg-gray'></i></div>";
+
+                  listall_html += "</tbody></table>"
+
+                  $('#imgtimeline').html(gallery_html);
+
                   $('#showimagelist').html(list_html);
 
-                  $('#dtBasicExample').DataTable();
-                  //$('.dataTables_length').addClass('bs-select');
+                  $('#showimagelistall').html(listall_html);
+
+                  var js = document.createElement("script");
+                  js.type = "text/javascript";
+                  js.src = "{% static 'gallery/js/links_js.js' %}";
+                  document.body.appendChild(js);
+
+                  $('#dtall').DataTable();
+
+                  for(var key in images)
+                  {
+                    var div_dt = "#dt" + key
+                    $(div_dt).DataTable({
+                                  dom: 'Bfrtip',
+                                  buttons: [
+                                      'copy', 'csv'
+                                  ]
+                              });
+                  }
+
+
+                 
                 }
                 else
                 {
@@ -510,17 +568,5 @@
 
 <script src="{% static 'gallery/js/blueimp-gallery.min.js' %}"></script>
 
-
-
-  <script>
-      document.getElementById('links').onclick = function(event) {
-        event = event || window.event
-        var target = event.target || event.srcElement,
-          link = target.src ? target.parentNode : target,
-          options = { index: link, event: event },
-          links = this.getElementsByTagName('a')
-        blueimp.Gallery(links, options)
-      }
-  </script>
 
 {% endblock %}

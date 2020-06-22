@@ -134,11 +134,22 @@
           </li>
           
 
-          <li class="nav-item">
+          <li class="nav-item has-treeview">
             <a href="" class="nav-link">
               <i class="nav-icon far fa-image"></i>
-              <p>Section 2</p>
+              <p>Update Data <i class="right fas fa-angle-left"></i>
+              </p>
             </a>
+
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'upload-concepts' %}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Concepts</p>
+                </a>
+              </li>
+              
+            </ul>
           </li>
 
           <li class="nav-header">ImageCLEF 2020 - Lifelog</li>

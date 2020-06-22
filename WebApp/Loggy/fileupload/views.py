@@ -1,5 +1,7 @@
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.views.generic import CreateView, DeleteView, ListView
+from django.views import View
 from .models import (ImageModel, LocationModel, ConceptModel, ConceptScoreModel, 
                         LocationInfoModel, CategoryModel, CategoryScoreModel,
                         ActivityModel, ActivityInfoModel, AttributesModel, AttributesInfoModel) 
@@ -11,8 +13,71 @@ import os
 from django.conf import settings
 from datetime import datetime
 import pytz
+from tqdm import tqdm
 
 from retrieval.sentence_analyzer.nlp_analyzer import word2lemma
+
+class UpdateConceptsView(View):
+
+    template_name = "fileupload/update_concepts.html"
+    model = ConceptModel
+
+    def get(self, request, *args, **kwargs):
+
+        concepts = self.model.objects.all()
+        context = { 'concepts': concepts }
+        return render(self.request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+
+        method = request.POST.getlist('button')[0]
+
+        image_query = ImageModel.objects.all()
+        if method == "update":
+            print("Updating Concepts")
+
+            with open(os.path.join(settings.MEDIA_ROOT, 'updated_concepts.json'), 'r') as concepts_file:
+                images_concepts_info = json.load(concepts_file)
+
+                for img in tqdm(image_query):
+                    
+                    new_concepts = images_concepts_info[img.slug]
+                    #print(img.concepts.all())
+                    img.concepts.clear()
+                    #print(img.concepts.all())
+
+                    for con in new_concepts["concepts"]:
+                        if con:
+                            for c in con:
+
+                                #print(con[c])
+                                p_string = ""
+                                for p in con[c]['box']:
+                                    p_string = p_string + str(p) + " " 
+
+                                con_obj = word2lemma(c)
+                                if (ConceptModel.objects.filter(tag=con_obj)):
+                                    obj = ConceptModel.objects.get(tag=con_obj)
+                                else: 
+                                    print(con_obj, " doesn't exist...Creating")
+                                    obj = ConceptModel(tag=con_obj)
+                                    obj.save()
+
+                                ConceptScoreModel.objects.create(image=img, tag=obj, score=con[c]['score'], box=p_string)
+
+                        else: 
+                            print("No Concepts!")
+
+                    #print(img.concepts.all())                                    
+
+
+        if method == "delete":
+            print("deleting Concepts")
+
+        concepts = self.model.objects.all()
+        context = { 'concepts': concepts }
+        return render(self.request, self.template_name, context)
+
 
 class ImageCreateView(CreateView):
     model = ImageModel

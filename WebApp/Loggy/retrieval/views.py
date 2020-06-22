@@ -24,6 +24,8 @@ import collections
 import itertools 
 import datetime
 
+from sklearn.cluster import DBSCAN
+
 class LMRT_TestView(View):
 
 	template_name = "retrieval/lmrt_test.html"
@@ -54,12 +56,12 @@ class LMRT_TestView(View):
 
 			sim_score = self.computeSimilarity(item, query_word)
 
-			if sim_score >= 0.5:
-				#print(item, query_word.tag, sim_score)
+			if sim_score >= 0.6:
+				print(item, query_word.tag, sim_score)
 				if isinstance(query_word, ConceptModel) and (search_mode in ["objects"]):
 					tmpFilter = datefilter & Q(concepts__tag__contains=query_word.tag)
 					tmp = ImageModel.objects.filter(tmpFilter)
-					#print("Number: ",tmp.count())
+					print("Number Concepts Images: ",tmp.count())
 					for img in tmp:
 
 						tmpScores = ConceptScoreModel.objects.filter(image=img, tag=query_word)
@@ -81,6 +83,7 @@ class LMRT_TestView(View):
 					tmpFilter = datefilter & Q(categories__tag__contains=query_word.tag)
 					tmp = ImageModel.objects.filter(tmpFilter)
 					#print("Number: ",tmp.count())
+					print("Number Categories Images: ",tmp.count())
 					for img in tmp:
 
 						tmpScores = CategoryScoreModel.objects.filter(image=img, tag=query_word)
@@ -101,6 +104,7 @@ class LMRT_TestView(View):
 				if isinstance(query_word, ActivityModel) and (search_mode in ["activities"]):
 					tmpFilter = datefilter & Q(activities__tag__contains=query_word.tag)
 					tmp = ImageModel.objects.filter(tmpFilter)
+					print("Number Activities Images: ",tmp.count())
 					#print("Number: ",tmp.count())
 					for img in tmp:
 						if img.slug not in imgsRetrieval:
@@ -119,6 +123,7 @@ class LMRT_TestView(View):
 				if isinstance(query_word, LocationModel) and (search_mode in ["locations"]):
 					tmpFilter = datefilter & Q(location__tag__contains=query_word.tag)
 					tmp = ImageModel.objects.filter(tmpFilter)
+					print("Number Locations Images: ",tmp.count())
 					#print("Number: ",tmp.count())
 					for img in tmp:
 						if img.slug not in imgsRetrieval:
@@ -136,6 +141,7 @@ class LMRT_TestView(View):
 				if isinstance(query_word, AttributesModel) and (search_mode in ["locations", "activities", "objects"]):
 					tmpFilter = datefilter & Q(attributes__tag__contains=query_word.tag)
 					tmp = ImageModel.objects.filter(tmpFilter)
+					print("Number Attributes Images: ",tmp.count())
 					#print("Number: ",tmp.count())
 					for img in tmp:
 						if img.slug not in imgsRetrieval:
@@ -169,19 +175,54 @@ class LMRT_TestView(View):
 		for s in search_labels:
 			#print(s)
 			if s in data:
+				tmpScore = 0
 				for k in data[s]:
 					#print(data[s][k])
-					tmpScore = 0
 					for j in data[s][k]:
 						if tmpScore < data[s][k][j]:
 							tmpScore = data[s][k][j]
 				
 					#print(tmpScore)	
-					imgScore = imgScore + tmpScore
+				imgScore = imgScore + tmpScore
 
 		imgScore = imgScore / len(search_labels)
 
-		return imgScore
+		return round(imgScore, 4)
+
+	def computeClusters(self, img_clusters):
+
+		features = []
+
+		for img, conf in img_clusters:
+			features.append(datetime.datetime.timestamp(img.date_time)/1000000000)
+			#print(datetime.datetime.timestamp(img.date_time)/1000000000)
+
+		X = np.asarray(features).reshape(-1, 1)
+
+		#print(X)
+		db = DBSCAN(eps=0.0000036, min_samples=2).fit(X)
+		labels = db.labels_
+
+		# Number of clusters in labels, ignoring noise if present.
+		n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+		n_noise_ = list(labels).count(-1)
+
+		#print(n_clusters_, n_noise_)
+		cluster_n = None
+
+		d = {}
+		#image_list[img] = [{'url': url, 'conf': score}]
+		for item, cl in zip(img_clusters, labels):
+			#print(item[0].slug, item[1], cl)
+			n_cl = str(cl)
+			
+			if n_cl not in d:
+				d[n_cl] = [{'url': item[0].file.url, 'conf': item[1], 'name': item[0].slug}]
+			else:
+				d[n_cl].append({'url': item[0].file.url, 'conf': item[1], 'name': item[0].slug})
+
+		#print(d)
+		return d
 				
 	def post(self, request, *args, **kwargs):
 
@@ -257,6 +298,7 @@ class LMRT_TestView(View):
 			all_queries = list(query_concepts) + list(query_categories) + list(query_activities) + list(query_attributes) + list(query_locations)
 			#print(all_queries)
 
+
 			for item in tqdm(all_queries):
 
 				#Negative (Irrelevant) words are obtained to create a filter
@@ -271,30 +313,27 @@ class LMRT_TestView(View):
 
 			
 			print(len(imgsRetrieval))
+
+			img_clusters = []
 			for img in tqdm(imgsRetrieval):
 
-				url = ImageModel.objects.filter(slug=img)[0].file.url
+				img_obj = ImageModel.objects.filter(slug=img)[0]
+				#url = img_obj.file.url
 				
 				score = self.computeImageScore(imgsRetrieval[img], search_labels)
-				if score > 0.5:
-					print(img, score) 
-					image_list[img] = [{'url': url, 'conf': score}]
+				if score > 0.6:
+					#print(img, score) 
+					#image_list[img] = [{'url': url, 'conf': score}]
+					img_clusters.append((img_obj, score))
 
-				#Filtering locations
-				#locFilter = locFilter | self.getWordFilter(imgRetrieval, locations, item, dateFilter, "locations")
+
+			print(len(img_clusters))
+
+			#Creating images clustering using temporal data
+			if img_clusters:
+				image_list = self.computeClusters(img_clusters)
 
 			print(len(image_list))
-			#final_filter = final_filter & objFilter & actFilter & locFilter & ~nFilter
-			#print(final_filter)
-
-			#final_set = ImageModel.objects.filter(final_filter).distinct()
-			#print(final_set.count())
-
-			#for img in final_set:
-				#name = img.slug
-				#url =  img.file.url
-				#score = 100
-				#image_list[name] = [{'url': url, 'conf': score}]
 
 			return JsonResponse({"success": True, "queryset": image_list}, status=200)
 		else:
