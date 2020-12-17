@@ -56,7 +56,7 @@ class LMRT_TestView(View):
 
 			sim_score = self.computeSimilarity(item, query_word)
 
-			if sim_score >= 0.6:
+			if sim_score >= 0.65:
 				print(item, query_word.tag, sim_score)
 				if isinstance(query_word, ConceptModel) and (search_mode in ["objects"]):
 					tmpFilter = datefilter & Q(concepts__tag__contains=query_word.tag)
@@ -200,7 +200,7 @@ class LMRT_TestView(View):
 		X = np.asarray(features).reshape(-1, 1)
 
 		#print(X)
-		db = DBSCAN(eps=0.0000036, min_samples=2).fit(X)
+		db = DBSCAN(eps=0.0000072, min_samples=3).fit(X)#0.0000036
 		labels = db.labels_
 
 		# Number of clusters in labels, ignoring noise if present.
@@ -321,7 +321,7 @@ class LMRT_TestView(View):
 				#url = img_obj.file.url
 				
 				score = self.computeImageScore(imgsRetrieval[img], search_labels)
-				if score > 0.6:
+				if score > 0.85:
 					#print(img, score) 
 					#image_list[img] = [{'url': url, 'conf': score}]
 					img_clusters.append((img_obj, score))
