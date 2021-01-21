@@ -7,11 +7,13 @@ import os
 from tqdm import tqdm
 import json
 
+from efficientnet_pytorch import EfficientNet
+
+
 
 def load_model():
 
 	model = torch.hub.load('facebookresearch/WSL-Images', 'resnext101_32x48d_wsl')
-
 	path = 'ResNeXt_101_32x48d.pth'
 
 	pretrained_dict=torch.load(path)['model']

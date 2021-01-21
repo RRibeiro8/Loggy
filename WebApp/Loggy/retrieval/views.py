@@ -56,7 +56,7 @@ class LMRT_TestView(View):
 
 			sim_score = self.computeSimilarity(item, query_word)
 
-			if sim_score >= 0.65:
+			if sim_score >= 0.75:
 				print(item, query_word.tag, sim_score)
 				if isinstance(query_word, ConceptModel) and (search_mode in ["objects"]):
 					tmpFilter = datefilter & Q(concepts__tag__contains=query_word.tag)
@@ -162,7 +162,7 @@ class LMRT_TestView(View):
 		for item in words:
 
 			sim_score = self.computeSimilarity(item, query_word)
-			if sim_score >= 0.7:
+			if sim_score >= 0.85:
 				return True
 
 		return False
@@ -315,19 +315,20 @@ class LMRT_TestView(View):
 			print(len(imgsRetrieval))
 
 			img_clusters = []
+			print("######Initial Retrieved Images Number: ", len(imgsRetrieval))
 			for img in tqdm(imgsRetrieval):
 
 				img_obj = ImageModel.objects.filter(slug=img)[0]
 				#url = img_obj.file.url
 				
 				score = self.computeImageScore(imgsRetrieval[img], search_labels)
-				if score > 0.85:
+				if score >= 0.90:
 					#print(img, score) 
 					#image_list[img] = [{'url': url, 'conf': score}]
 					img_clusters.append((img_obj, score))
 
-
-			print(len(img_clusters))
+			print("######Filtered Retrieved Images Number: ", len(img_clusters))
+			
 
 			#Creating images clustering using temporal data
 			if img_clusters:

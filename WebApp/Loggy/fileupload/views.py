@@ -17,6 +17,60 @@ from tqdm import tqdm
 
 from retrieval.sentence_analyzer.nlp_analyzer import word2lemma
 
+class UpdateLocationsView(View):
+
+    template_name = "fileupload/update_locations.html"
+    model = LocationModel
+
+    def get(self, request, *args, **kwargs):
+
+        locations = self.model.objects.all()
+        context = { 'locations': locations }
+        return render(self.request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+
+        method = request.POST.getlist('button')[0]
+
+        image_query = ImageModel.objects.all()
+        if method == "update":
+            print("Updating locations")
+
+                                     
+        if method == "delete":
+            print("deleting locations")
+
+        locations = self.model.objects.all()
+        context = { 'locations': locations }
+        return render(self.request, self.template_name, context)
+
+class UpdateActivitiesView(View):
+
+    template_name = "fileupload/update_activities.html"
+    model = ActivityModel
+
+    def get(self, request, *args, **kwargs):
+
+        activities = self.model.objects.all()
+        context = { 'activities': activities }
+        return render(self.request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+
+        method = request.POST.getlist('button')[0]
+
+        image_query = ImageModel.objects.all()
+        if method == "update":
+            print("Updating Activities")
+
+                                     
+        if method == "delete":
+            print("deleting Activities")
+
+        activities = self.model.objects.all()
+        context = { 'activities': activities }
+        return render(self.request, self.template_name, context)
+
 class UpdateConceptsView(View):
 
     template_name = "fileupload/update_concepts.html"
